@@ -182,6 +182,8 @@ Footage by **Agnieszka Malonik Taggart**, **Wojciech Sulewski**, **Dariusz Nawro
 
 The original experiments in the paper used [AlexeyAB/darknet](https://github.com/AlexeyAB/darknet).
 
+This toolkit and benchmark were built with [Claude Code](https://claude.com/claude-code).
+
 ## Author
 
 **Jan Gąsienica-Józkowy** — [Google Scholar](https://scholar.google.com/citations?user=) · ORCID [0009-0009-7120-9083](https://orcid.org/0009-0009-7120-9083) · Hugging Face [`jgasienica`](https://huggingface.co/jgasienica)
