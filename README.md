@@ -23,8 +23,8 @@ print(ds, anns[0], ds.class_names[anns[0].class_id])
 ```
 
 ```
-AFODataset(split='test', images=..., objects=..., categories='6categories', clip=True)
-Annotation(class_id=0, cx=0.413, cy=0.627, w=0.011, h=0.019) human
+AFODataset(split='test', images=514, objects=7639, categories='6categories', clip=True)
+Annotation(class_id=0, cx=0.7617, cy=0.9069, w=0.0559, h=0.0792) human
 ```
 
 Export the official splits to COCO JSON (written to the cache, not the repo):
