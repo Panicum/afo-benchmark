@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "afo"
+version = "0.1.0"
+description = "Loader, COCO export and benchmark for the AFO (Aerial dataset of Floating Objects) dataset"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Jan Gasienica-Jozkowy", email = "j.gasienica@myled.pl" }]
+keywords = ["object-detection", "drone", "maritime", "search-and-rescue", "dataset", "benchmark"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Scientific/Engineering :: Image Recognition",
+]
+dependencies = [
+    "huggingface_hub>=0.23",
+    "numpy>=1.24",
+    "pillow>=10.0",
+    "pycocotools>=2.0.7",
+    "pyyaml>=6.0",
+    "tqdm>=4.65",
+]
+
+[project.optional-dependencies]
+notebook = ["matplotlib>=3.7", "jupyter", "nbconvert", "nbformat"]
+train = ["ultralytics>=8.3", "rfdetr>=1.1", "torch>=2.1"]
+dev = ["pytest>=7.4"]
+
+[project.urls]
+Homepage = "https://huggingface.co/datasets/jgasienica/afo-dataset"
+Paper = "https://doi.org/10.3233/ICA-210649"
+
+[tool.setuptools.packages.find]
+include = ["afo*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

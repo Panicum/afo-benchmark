@@ -1,0 +1,43 @@
+cff-version: 1.2.0
+message: "If you use the AFO dataset or this toolkit, please cite the paper below."
+title: "AFO — Aerial dataset of Floating Objects: loader, COCO export and benchmark"
+abstract: >-
+  Tooling and reproducible detection baselines for AFO, a maritime search-and-rescue
+  dataset of 3,641 drone images with 39,991 hand-annotated objects in six classes.
+type: software
+authors:
+  - family-names: "Gąsienica-Józkowy"
+    given-names: "Jan"
+    orcid: "https://orcid.org/0009-0009-7120-9083"
+repository-code: "https://github.com/jgasienica/afo-dataset"
+url: "https://huggingface.co/datasets/jgasienica/afo-dataset"
+license: MIT
+keywords:
+  - object detection
+  - unmanned aerial vehicles
+  - maritime search and rescue
+  - small object detection
+  - benchmark
+
+preferred-citation:
+  type: article
+  title: >-
+    An ensemble deep learning method with optimized weights for drone-based
+    water rescue and surveillance
+  authors:
+    - family-names: "Gąsienica-Józkowy"
+      given-names: "Jan"
+      orcid: "https://orcid.org/0009-0009-7120-9083"
+    - family-names: "Knapik"
+      given-names: "Mateusz"
+    - family-names: "Cyganek"
+      given-names: "Bogusław"
+  journal: "Integrated Computer-Aided Engineering"
+  volume: 28
+  issue: 3
+  start: 221
+  end: 235
+  year: 2021
+  doi: "10.3233/ICA-210649"
+  publisher:
+    name: "IOS Press"

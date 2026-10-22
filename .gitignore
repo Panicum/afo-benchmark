@@ -1,0 +1,25 @@
+data/
+*.pt
+*.pth
+runs/
+wandb/
+.cache/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# nigdy nie commitujemy danych zbioru
+PART_1/
+PART_2/
+PART_3/
+*.weights
+*.onnx
+*.engine
