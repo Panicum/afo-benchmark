@@ -44,6 +44,18 @@ def build_table(rows: list[dict]) -> str:
     if not rows:
         return "*Brak wynikow — uruchom `scripts/train_ultralytics.py`.*"
 
+    # Leaderboard jest 6-klasowy. Biegi na innej liczbie klas to inne zadanie
+    # i nie wolno ich mieszac w jednej tabeli — raportujemy je osobno
+    # (sekcja porownania z praca w README).
+    main = [r for r in rows if r.get("categories", "6categories") == "6categories"]
+    other = [r for r in rows if r.get("categories", "6categories") != "6categories"]
+    if other:
+        names = ", ".join(sorted({f"{r['model']}@{r['imgsz']} ({r['categories']})" for r in other}))
+        print(f"Poza glowna tabela (inna liczba klas): {names}")
+    if not main:
+        return "*Brak wynikow 6-klasowych.*"
+    rows = main
+
     by_imgsz: dict[int, list[dict]] = {}
     for r in rows:
         by_imgsz.setdefault(r.get("imgsz") or 0, []).append(r)

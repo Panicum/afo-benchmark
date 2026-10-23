@@ -148,7 +148,7 @@ Reproducible baselines trained on the official train split, selected on val, rep
 
 | model | mAP50 | mAP50-95 | AP-tiny (n=4424) | AP-small (n=2930) | params (M) | FPS | wagi |
 |---|---|---|---|---|---|---|---|
-| `yolo11n` | 0.4716 | **0.2417** | 0.2222 | 0.2721 | 2.61 | 59.1 | [HF](https://huggingface.co/jgasienica/afo-yolo11n-640) |
+| `yolo11n` | 0.4716 | **0.2417** | 0.2222 | 0.2721 | 2.61 | 63.2 | [HF](https://huggingface.co/jgasienica/afo-yolo11n-640) |
 
 Sortowanie po mAP50-95 na tescie. Kubelki rozmiaru liczone w pikselach **wejscia modelu**, wiec AP-tiny przy 640 i przy 1280 opisuja **inne populacje obiektow** i nie wolno ich porownywac miedzy sekcjami. Jeden bieg na model, bez pomiaru rozrzutu po ziarnach — roznice ponizej ~1 punktu traktowac jak szum. FPS: batch 1, FP16, RTX 4090 **Laptop** GPU. Zadna kolumna nie mierzy falszywych alarmow (test nie ma obrazow tla) — patrz [BENCHMARK.md](BENCHMARK.md).
 <!-- leaderboard:end -->
@@ -188,25 +188,33 @@ So do the split shares (67.4 / 13.48 / 19.1% of objects) and the claim that over
 
 The two-category version merges **human + buoy → `small_obj`** and **board + boat + sailboat + kayak → `large_obj`** (paper §3.1). That is a *semantic* merge, despite the names — it is **not** a threshold on box area. Reading `AP@50 Small Object` in Table 2 as "AP for small objects" in the COCO size sense is the natural misreading, and it is wrong.
 
-### A like-for-like bridge
+### A like-for-like comparison
 
-`afo/evaluate.py` can merge 6-class predictions into the paper's two classes, which makes the **class definition** identical even though the training is not. Every run in this repository reports it under `two_category` in `metrics.json`.
+To put a number next to Table 2, the class definition has to match. There are two ways to get there, and this repository reports both:
+
+1. **Merge after training** — take a 6-class model and collapse its predictions into the paper's two classes. `afo/evaluate.py` does this, and every 6-class run records it under `two_category` in `metrics.json`. The class definition matches; the training does not, because the model still paid to separate six classes.
+2. **Train on two classes directly** — `--categories 2categories`, which is the paper's actual setup.
+
+Both were run for YOLO11n @640, so the cost of the shortcut is measured rather than assumed:
 
 | model | classes trained | AP | AP@50 | AP@50 small_obj | AP@50 large_obj |
 |---|---|---|---|---|---|
 | SSD300 (MobileNet v2) *paper* | 2 | 14.35 | 41.40 | 24.34 | 58.45 |
 | YOLOv3 (Darknet53) *paper* | 2 | 24.40 | 68.58 | 51.08 | 86.08 |
-| **YOLO11n @640** *this repo* | **6, merged after** | **31.57** | **70.12** | **53.45** | **86.80** |
+| YOLO11n @640 *this repo* | 6, merged after | 31.57 | 70.12 | 53.45 | 86.80 |
 | YOLOv4 (CSPDarknet53-PANet-SPP) *paper* | 2 | 31.50 | 71.13 | 54.58 | 87.67 |
+| **YOLO11n @640** *this repo* | **2** | **32.06** | **72.87** | **56.90** | **88.84** |
 | Faster R-CNN (R50-FPN) *paper* | 2 | 33.35 | 78.51 | 67.08 | 89.94 |
-| RetinaNet (R50) *paper* | 2 | 34.93 | 79.82 | 69.31 | 90.31 |
+| RetinaNet (R50) *paper* | 2 | 34.93 | 79.82 | **69.31** | 90.31 |
 | RetinaNet (R101) *paper* | 2 | 35.83 | 79.36 | 65.00 | 93.71 |
 | Faster R-CNN (R101-FPN) *paper* | 2 | 36.25 | 78.97 | 64.11 | 93.82 |
-| Best ensemble (paper's contribution) | 2 | **37.71** | **82.16** | 70.53 | 94.71 |
+| Best ensemble (paper's contribution) | 2 | **37.71** | **82.16** | 70.53 | **94.71** |
 
-A 2.6 M-parameter nano model from 2024 lands on YOLOv4 to within 0.1 AP, while carrying the handicap of having been trained to separate six classes rather than two. It remains **4–6 AP behind the two-stage Detectron2 baselines** and **6 AP behind the paper's ensemble**, and the gap is concentrated exactly where the paper said it would be: `small_obj` AP@50 of 53.5 against RetinaNet's 69.3.
+**What the merge costs:** +0.49 AP, +2.75 AP@50 from training on two classes directly, with the largest gain on `small_obj` (+3.45 AP@50). So the post-hoc merge is a usable lower bound, understating by roughly half a point of AP — worth knowing, since it comes free with every 6-class run.
 
-Caveats that keep this honest: the merged number comes from a 6-class model, so it is a **lower bound** on what the same architecture would reach trained on two classes; the resolutions and schedules differ; and it is one seed.
+**Where this leaves YOLO11n.** A 2.6 M-parameter model from 2024, trained for 39 minutes, edges past YOLOv4 (+0.56 AP, +1.74 AP@50). It is still **1.3–4.2 AP behind the two-stage Detectron2 baselines** and **5.7 AP behind the paper's ensemble**. The gap sits exactly where the paper predicted: `small_obj` AP@50 of 56.9 against RetinaNet-R50's 69.3 — **12.4 points** — while on `large_obj` it is within 1.5 points of the best single model. Five years of architecture progress in a nano-scale model buys parity with 2020's best one-stage detector on large objects and does not close the small-object gap at all.
+
+Remaining caveats: resolutions differ (544² and 1333×750 in the paper, 640 here), schedules differ (fixed 20k iterations against 100 epochs with early stopping), and these are single-seed runs.
 
 ---
 

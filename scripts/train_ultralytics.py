@@ -95,6 +95,11 @@ def main() -> None:
     ap.add_argument("--batch", type=int, default=None, help="pomin sonde i wymus batch")
     ap.add_argument("--limit-frac", type=float, default=DEFAULT_LIMIT_FRAC)
     ap.add_argument("--data", default=None, help="afo.yaml (domyslnie <cache>/yolo1280/afo.yaml)")
+    ap.add_argument(
+        "--categories", default="6categories",
+        choices=["6categories", "2categories", "1category"],
+        help="wersja etykiet; 2categories to schemat z Tabeli 2 oryginalnej pracy",
+    )
     ap.add_argument("--results-dir", default="results")
     ap.add_argument("--workers", type=int, default=8)
     ap.add_argument(
@@ -110,8 +115,11 @@ def main() -> None:
         raise SystemExit("Brak CUDA.")
     gpu = torch.cuda.get_device_name(0)
 
-    data = args.data or str(dataset_root() / "yolo1280" / "afo.yaml")
-    run_name = f"{args.model}_{args.imgsz}"
+    two_cat = args.categories == "2categories"
+    suffix = {"6categories": "", "2categories": "_2cat", "1category": "_1cat"}[args.categories]
+    default_data = dataset_root() / f"yolo1280{suffix}" / "afo.yaml"
+    data = args.data or str(default_data)
+    run_name = f"{args.model}_{args.imgsz}{suffix}"
     # Sciezki bezwzgledne: Ultralytics traktuje wzgledny `project` jako podkatalog
     # swojego runs_dir, wiec "results/_runs" ladowalo w runs/detect/results/_runs.
     results_root = Path(args.results_dir).resolve()
@@ -195,25 +203,38 @@ def main() -> None:
         yaml.safe_dump(_plain(cfg), sort_keys=False, allow_unicode=True), encoding="utf-8"
     )
 
+    # Zbior odniesienia zalezy od wersji etykiet — ustalany PRZED predykcja,
+    # bo predict potrzebuje z niego wymiarow obrazow i identyfikatorow.
+    gt = dataset_root() / ("coco2cat" if two_cat else "coco") / "test.json"
+    if not gt.is_file():
+        raise SystemExit(
+            f"Brak {gt}. Wygeneruj: python scripts/export_coco.py --splits test "
+            f"--categories {args.categories} --out-dir {gt.parent}"
+        )
+
     # --- predykcje na tescie -------------------------------------------------
     print("\npredykcje na tescie...")
     from afo.predict import predict_ultralytics
 
     pred_path = out_dir / "predictions_test.json"
-    predict_ultralytics(str(best), args.imgsz, pred_path)
+    predict_ultralytics(
+        str(best), args.imgsz, pred_path, gt_json=gt,
+        images_dir=Path(data).parent / "images" / "test",
+    )
 
     # --- ewaluacja wspolnym ewaluatorem --------------------------------------
     from afo.evaluate import evaluate
 
-    gt = dataset_root() / "coco" / "test.json"
     metrics = evaluate(gt, pred_path, imgsz=args.imgsz)
+    metrics["categories"] = args.categories
 
-    # Most do Tabeli 2 oryginalnej pracy, ktora liczona jest na wersji
-    # DWUKLASOWEJ. Bez tego liczby z leaderboardu i z pracy wygladaja na
-    # porownywalne, a nie sa.
-    from afo.evaluate import evaluate_two_category
+    if not two_cat:
+        # Most do Tabeli 2 oryginalnej pracy, ktora liczona jest na wersji
+        # DWUKLASOWEJ. Bez tego liczby z leaderboardu i z pracy wygladaja na
+        # porownywalne, a nie sa. Przy treningu 2-klasowym jest zbedny.
+        from afo.evaluate import evaluate_two_category
 
-    metrics["two_category"] = evaluate_two_category(gt, pred_path, imgsz=args.imgsz)
+        metrics["two_category"] = evaluate_two_category(gt, pred_path, imgsz=args.imgsz)
 
     # --- FPS -----------------------------------------------------------------
     print("\npomiar FPS...")
@@ -245,7 +266,7 @@ def main() -> None:
         "peak_vram_GB": None if c is None else round(c.peak_GB, 2),
         "gpu": str(gpu),
     }
-    metrics["weights_hf"] = f"jgasienica/afo-{args.model}-{args.imgsz}"
+    metrics["weights_hf"] = f"jgasienica/afo-{args.model}-{args.imgsz}{suffix.replace('_','-')}"
 
     (out_dir / "metrics.json").write_text(json.dumps(metrics, indent=2), encoding="utf-8")
     shutil.copy2(best, out_dir / "best.pt")  # .gitignore trzyma to poza repo

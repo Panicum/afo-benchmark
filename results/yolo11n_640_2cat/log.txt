@@ -1,0 +1,38 @@
+=== yolo11n_640_2cat ===
+GPU: NVIDIA GeForce RTX 4090 Laptop GPU
+sysmem fallback sterownika: True (batch MUSI byc ograniczany pomiarem)
+dane: C:\Users\Jan\.cache\afo\yolo1280_2cat\afo.yaml
+
+batch wymuszony: 64
+--post-only: trening pominiety; czas z results.csv: 0.64 h
+
+predykcje na tescie...
+[predict] ramki przeskalowane do ukladu GT dla 514/514 obrazow (predykcja na przeskalowanych kopiach)
+[predict] 34919 detekcji na 514/514 obrazach -> C:\Users\Jan\Projects\afoDataset\results\yolo11n_640_2cat\predictions_test.json
+
+=== AFO test — predictions_test.json (imgsz=640) ===
+obrazow 514, obiektow GT 7639, detekcji 34919
+
+mAP50-95 0.3206   mAP50 0.7287   (maxDets=300; przy 100: 0.3201)
+
+AP na klase (AP50-95 / AP50, n obiektow GT):
+  small_obj        0.1781  0.5690   n= 6570
+  large_obj        0.4631  0.8884   n= 1069
+
+Kubelki AFO (w pikselach wejscia, imgsz=640):
+  tiny     AP50-95 0.2532   n= 4424
+  small    AP50-95 0.3496   n= 2930
+  medium   AP50-95 0.4565   n=  285
+  large    AP50-95    —     n=    0
+  UWAGA: nieporownywalne miedzy roznymi imgsz.
+
+Standardowe COCO (piksele oryginalu, dla porownania z innymi pracami):
+  AP-S  0.0013
+  AP-M  0.2896
+  AP-L  0.3445
+
+pomiar FPS...
+[fps] mediana 55.6 FPS end-to-end (zakres 52.04–63.76, rozrzut 21%, 3 przebiegi, odrzucony przebieg na zimno 61.44)
+[fps] UWAGA: rozrzut powyzej 15% — GPU prawdopodobnie zmienia stan cieplny. Powtorz pomiar na ustabilizowanej maszynie.
+
+Zapisano C:\Users\Jan\Projects\afoDataset\results\yolo11n_640_2cat

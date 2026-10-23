@@ -63,11 +63,17 @@ def prepare_yolo(
     clip: bool = True,
     force: bool = False,
     max_side: int | None = None,
+    categories: str = "6categories",
+    images_from: Path | str | None = None,
 ) -> Path:
     """Buduje uklad YOLO i zwraca sciezke do pliku ``afo.yaml``.
 
     ``max_side`` (np. 1280) zapisuje przeskalowane kopie obrazow zamiast
     dowiazan — patrz ``_resize_to``. None zostawia oryginaly.
+
+    ``categories`` wybiera katalog etykiet ("6categories", "2categories",
+    "1category"). ``images_from`` pozwala podlinkowac gotowe obrazy z innego
+    ukladu (np. juz przeskalowanego), zamiast skalowac je ponownie.
 
     Nic nie znika po cichu: liczba obrazow i etykiet jest porownywana z loaderem,
     a rozbieznosc konczy sie wyjatkiem, nie cichym pominieciem.
@@ -76,14 +82,18 @@ def prepare_yolo(
     if out_dir:
         out = Path(out_dir)
     else:
-        out = root / (f"{YOLO_DIRNAME}{max_side}" if max_side else YOLO_DIRNAME)
+        name = f"{YOLO_DIRNAME}{max_side}" if max_side else YOLO_DIRNAME
+        if categories != "6categories":
+            name += "_" + categories.replace("categories", "cat").replace("category", "cat")
+        out = root / name
     out.mkdir(parents=True, exist_ok=True)
+    src_images = Path(images_from) if images_from else None
 
     class_names: list[str] = []
     stats: dict[str, dict[str, int]] = {}
 
     for split in SPLITS:
-        ds = AFODataset(split, root=root, clip=clip)
+        ds = AFODataset(split, root=root, clip=clip, categories=categories)
         class_names = list(ds.class_names)
 
         img_dir = out / "images" / split
@@ -105,7 +115,12 @@ def prepare_yolo(
             pass
         for rec in records:
             dst = img_dir / rec.filename
-            if max_side:
+            if src_images is not None:
+                src = src_images / split / rec.filename
+                if not src.is_file():
+                    raise FileNotFoundError(f"Brak obrazu {src}")
+                modes[_link_or_copy(src, dst)] += 1
+            elif max_side:
                 modes[_resize_to(rec.image_path, dst, max_side)] += 1
             else:
                 modes[_link_or_copy(rec.image_path, dst)] += 1
@@ -164,9 +179,15 @@ def main() -> None:
         "--max-side", type=int, default=None,
         help="przeskaluj obrazy do tego dluzszego boku (np. 1280) zamiast dowiazywac",
     )
+    ap.add_argument("--categories", default="6categories")
+    ap.add_argument(
+        "--images-from", default=None,
+        help="katalog <...>/images gotowego ukladu, z ktorego podlinkowac obrazy",
+    )
     args = ap.parse_args()
     prepare_yolo(
-        args.root, args.out, clip=not args.no_clip, force=args.force, max_side=args.max_side
+        args.root, args.out, clip=not args.no_clip, force=args.force,
+        max_side=args.max_side, categories=args.categories, images_from=args.images_from,
     )
 
 

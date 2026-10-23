@@ -1,0 +1,107 @@
+{
+  "gt_json": "C:\\Users\\Jan\\.cache\\afo\\coco2cat\\test.json",
+  "dt_json": "C:\\Users\\Jan\\Projects\\afoDataset\\results\\yolo11n_640_2cat\\predictions_test.json",
+  "imgsz": 640,
+  "n_images": 514,
+  "n_gt_objects": 7639,
+  "n_detections": 34919,
+  "max_dets_primary": 300,
+  "class_names": [
+    "small_obj",
+    "large_obj"
+  ],
+  "mAP50_95": 0.3206178843432969,
+  "mAP50": 0.7286895018282289,
+  "mAP50_95_maxdets100": 0.3200968481861724,
+  "AP_S_coco": 0.0012601260126012602,
+  "AP_M_coco": 0.2895933497130726,
+  "AP_L_coco": 0.3445248595438268,
+  "per_class": {
+    "small_obj": {
+      "AP50_95": 0.17810792846721926,
+      "AP50": 0.5690205284036913,
+      "n_gt": 6570
+    },
+    "large_obj": {
+      "AP50_95": 0.4631278402193744,
+      "AP50": 0.8883584752527662,
+      "n_gt": 1069
+    }
+  },
+  "afo_buckets": {
+    "tiny": {
+      "AP50_95": 0.25316648900524136,
+      "AP50": 0.5946601445295486,
+      "n_gt": 4424
+    },
+    "small": {
+      "AP50_95": 0.3496474978360702,
+      "AP50": 0.7886619796239329,
+      "n_gt": 2930
+    },
+    "medium": {
+      "AP50_95": 0.45650559343360697,
+      "AP50": 0.8674306672007421,
+      "n_gt": 285
+    },
+    "large": {
+      "AP50_95": NaN,
+      "AP50": NaN,
+      "n_gt": 0
+    }
+  },
+  "afo_buckets_note": "Pola mierzone po przeskalowaniu do imgsz=640; kubelkow NIE wolno porownywac miedzy roznymi imgsz (inna populacja obiektow).",
+  "categories": "2categories",
+  "speed": {
+    "gpu": "NVIDIA GeForce RTX 4090 Laptop GPU",
+    "imgsz": 640,
+    "precision": "fp16",
+    "batch": 1,
+    "warmup_images": 50,
+    "timed_images": 464,
+    "end_to_end": {
+      "mean_ms": 17.987,
+      "median_ms": 16.869,
+      "p95_ms": 27.819,
+      "fps": 55.6,
+      "fps_min": 52.04,
+      "fps_max": 63.76,
+      "fps_all": [
+        52.04,
+        55.6,
+        63.76
+      ]
+    },
+    "forward_only": {
+      "mean_ms": 9.262,
+      "median_ms": 8.259,
+      "p95_ms": 15.039,
+      "fps": 107.97,
+      "fps_min": 102.05,
+      "fps_max": 124.85,
+      "fps_all": [
+        102.05,
+        107.97,
+        124.85
+      ]
+    },
+    "note": "NVIDIA GeForce RTX 4090 Laptop GPU \u2014 czesc LAPTOPOWA (76 SM wobec 128 w wersji desktopowej), podatna na throttling termiczny. FPS porownywac miedzy wierszami tej tabeli, nie z wynikami z desktopowych kart.",
+    "repeats": 3,
+    "warmup_run_discarded_fps": 61.44,
+    "fps_spread_pct": 21.1
+  },
+  "model": "yolo11n",
+  "framework": "ultralytics",
+  "params_M": 2.61,
+  "gflops": 6.6,
+  "train": {
+    "epochs_budget": 100,
+    "patience": 20,
+    "batch": 64,
+    "seed": 0,
+    "hours": 0.642,
+    "peak_vram_GB": null,
+    "gpu": "NVIDIA GeForce RTX 4090 Laptop GPU"
+  },
+  "weights_hf": "jgasienica/afo-yolo11n-640-2cat"
+}
