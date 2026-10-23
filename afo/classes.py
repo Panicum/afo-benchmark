@@ -32,21 +32,38 @@ def display_name(name: str) -> str:
     return DISPLAY_NAMES.get(name, name)
 
 
-def names_file(root: Path | str | None = None) -> Path:
-    """Sciezka do 6categories.names w pobranym zbiorze."""
+#: Wersja dwuklasowa z pracy: "human" i "buoy" -> small_obj, reszta -> large_obj.
+#: Plik 1categories.names w wydaniu jest PUSTY, stad fallback takze dla niego.
+FALLBACK_NAMES: dict[str, tuple[str, ...]] = {
+    "6categories": CLASS_NAMES,
+    "2categories": ("small_obj", "large_obj"),
+    "1category": ("object",),
+}
+
+#: Z ktorych klas 6-kategoriowych powstaje kazda klasa wersji dwuklasowej
+#: (Gasienica-Jozkowy i in. 2021, sekcja 3.1). Podzial jest SEMANTYCZNY,
+#: a nie progiem na powierzchni ramki — mimo nazw "small"/"large".
+TWO_CATEGORY_MAP: dict[str, tuple[str, ...]] = {
+    "small_obj": ("human", "bouy"),
+    "large_obj": ("wind/sup-board", "boat", "sailboat", "kayak"),
+}
+
+
+def names_file(root: Path | str | None = None, categories: str = "6categories") -> Path:
+    """Sciezka do pliku .names odpowiadajacego danemu katalogowi etykiet."""
     r = dataset_root(root)
-    return part_dir(r, 1) / "6categories.names"
+    return part_dir(r, 1) / f"{categories}.names"
 
 
-@lru_cache(maxsize=4)
-def load_class_names(root: str | None = None) -> tuple[str, ...]:
-    """Czyta nazwy klas z pliku .names (zrodlo prawdy); fallback na CLASS_NAMES."""
+@lru_cache(maxsize=8)
+def load_class_names(root: str | None = None, categories: str = "6categories") -> tuple[str, ...]:
+    """Czyta nazwy klas z pliku .names (zrodlo prawdy); fallback na stale wyzej."""
     try:
-        path = names_file(root)
+        path = names_file(root, categories)
         lines = [ln.strip() for ln in path.read_text(encoding="utf-8").splitlines()]
         names = tuple(ln for ln in lines if ln)
         if names:
             return names
     except FileNotFoundError:
         pass
-    return CLASS_NAMES
+    return FALLBACK_NAMES.get(categories, CLASS_NAMES)

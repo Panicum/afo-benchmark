@@ -208,6 +208,13 @@ def main() -> None:
     gt = dataset_root() / "coco" / "test.json"
     metrics = evaluate(gt, pred_path, imgsz=args.imgsz)
 
+    # Most do Tabeli 2 oryginalnej pracy, ktora liczona jest na wersji
+    # DWUKLASOWEJ. Bez tego liczby z leaderboardu i z pracy wygladaja na
+    # porownywalne, a nie sa.
+    from afo.evaluate import evaluate_two_category
+
+    metrics["two_category"] = evaluate_two_category(gt, pred_path, imgsz=args.imgsz)
+
     # --- FPS -----------------------------------------------------------------
     print("\npomiar FPS...")
     from afo.fps import measure_fps

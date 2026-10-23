@@ -186,7 +186,7 @@ class AFODataset(Sequence):
         self.split = split.lower()
         self.clip = clip
         self.categories = categories
-        self.class_names = load_class_names(str(self.root))
+        self.class_names = load_class_names(str(self.root), categories)
         self.label_dir = part_dir(self.root, 1) / categories
 
         index = _image_index(str(self.root))

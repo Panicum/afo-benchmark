@@ -27,3 +27,7 @@ PART_3/
 # wagi i surowe biegi frameworka — do repo trafiaja tylko artefakty wynikowe
 results/_runs/
 results/*/best.pt
+
+# praca opublikowana w czasopismie — prawa po stronie wydawcy, nigdy nie commitujemy
+paper.pdf
+*.pdf

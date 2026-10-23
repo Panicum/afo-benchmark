@@ -225,6 +225,60 @@ def print_report(r: dict[str, Any]) -> None:
         print(f"  AP-{b}  {'  —  ' if np.isnan(v) else f'{v:.4f}'}")
 
 
+#: Wersja dwuklasowa z pracy (sekcja 3.1): human+buoy -> small_obj,
+#: reszta -> large_obj. Klucze to identyfikatory kategorii COCO (1..6).
+TWO_CAT_REMAP = {1: 1, 4: 1, 2: 2, 3: 2, 5: 2, 6: 2}
+TWO_CAT_NAMES = {1: "small_obj", 2: "large_obj"}
+
+
+def evaluate_two_category(
+    gt_json: Path | str,
+    dt_json: Path | str,
+    imgsz: int | None = None,
+    verbose: bool = True,
+) -> dict[str, Any]:
+    """Ewaluacja po scaleniu 6 klas do 2, jak w Tabeli 2 oryginalnej pracy.
+
+    UWAGA na interpretacje: to NIE jest model uczony na dwoch klasach. To model
+    6-klasowy, ktorego predykcje i GT scalono po fakcie. Daje liczbe o tej samej
+    DEFINICJI KLAS co praca, ale nie o tym samym treningu — model nadal placil
+    za rozroznianie szesciu kategorii. Traktowac jako dolne oszacowanie.
+    """
+    import json as _json
+    import tempfile
+
+    gt = _json.loads(Path(gt_json).read_text(encoding="utf-8"))
+    dt = _json.loads(Path(dt_json).read_text(encoding="utf-8"))
+
+    gt = dict(gt)
+    gt["categories"] = [
+        {"id": i, "name": n, "supercategory": "afo"} for i, n in sorted(TWO_CAT_NAMES.items())
+    ]
+    gt["annotations"] = [
+        {**a, "category_id": TWO_CAT_REMAP[a["category_id"]]} for a in gt["annotations"]
+    ]
+    dt = [{**d, "category_id": TWO_CAT_REMAP[d["category_id"]]} for d in dt]
+
+    tmp = Path(tempfile.mkdtemp())
+    gt_p, dt_p = tmp / "gt_2cat.json", tmp / "dt_2cat.json"
+    gt_p.write_text(_json.dumps(gt), encoding="utf-8")
+    dt_p.write_text(_json.dumps(dt), encoding="utf-8")
+
+    r = evaluate(gt_p, dt_p, imgsz=imgsz, verbose=False)
+    r["categories"] = "2 (small_obj = human+bouy; large_obj = board/boat/sailboat/kayak)"
+    r["caveat"] = (
+        "Model uczony na 6 klasach, predykcje scalone po fakcie — nie to samo, "
+        "co trening na wersji dwuklasowej."
+    )
+    if verbose:
+        print("\n=== Wersja DWUKLASOWA (definicja klas jak w Tabeli 2 pracy) ===")
+        print(f"AP (50-95) {r['mAP50_95']:.4f}   AP@50 {r['mAP50']:.4f}")
+        for name, d in r["per_class"].items():
+            print(f"  {name:10s} AP50-95 {d['AP50_95']:.4f}  AP@50 {d['AP50']:.4f}  n={d['n_gt']}")
+        print(f"  {r['caveat']}")
+    return r
+
+
 def main() -> None:
     import argparse
 

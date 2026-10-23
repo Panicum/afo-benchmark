@@ -114,7 +114,7 @@ tracker: tracktrack.yaml
 save_dir: C:\Users\Jan\Projects\afoDataset\results\_runs\yolo11n_640
 _afo_protocol: BENCHMARK.md
 _gpu: NVIDIA GeForce RTX 4090 Laptop GPU
-_git_rev: 6ae75c5
+_git_rev: 541e10e
 _python: 3.13.2
 _torch: 2.6.0+cu124
 _train_hours: 0.723

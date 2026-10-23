@@ -155,6 +155,61 @@ Sortowanie po mAP50-95 na tescie. Kubelki rozmiaru liczone w pikselach **wejscia
 
 ---
 
+## How this compares to the original paper
+
+The 2021 paper reports its own baselines. **They are not directly comparable to the table above**, and the reason is easy to miss, so it is spelled out here.
+
+### What reproduces exactly
+
+Every per-class count in the paper's Table 1 matches the released files to the object, computed independently by `scripts/stats.py`:
+
+| | human | board | boat | buoy | sailboat | kayak |
+|---|---|---|---|---|---|---|
+| train | 22,272 | 2,749 | 506 | 428 | 115 | 890 |
+| val | 4,391 | 539 | 53 | 100 | 17 | 292 |
+| test | 6,511 | 634 | 143 | 59 | 28 | 264 |
+
+So do the split shares (67.4 / 13.48 / 19.1% of objects) and the claim that over 99% of objects cover less than 1% of the image area — measured: **99.39%**.
+
+### What does not reproduce
+
+- **3,647 images in the paper, 3,641 released.** Six were never published. They must be background frames, since the object count (39,991) matches exactly.
+- **"More than 30% of the images contain more than 20 instances."** Measured: **22.2%** of images hold more than 20 objects. The 30% figure fits a threshold of **10** objects (30.8%), which looks like a transcription slip. Neither number changes any conclusion in the paper.
+
+### Why the paper's Table 2 is a different measurement
+
+| | paper Table 2 | this leaderboard |
+|---|---|---|
+| classes | **2** (`small_obj`, `large_obj`) | **6** |
+| "Small/Large Object" columns | **per-class AP** for the two merged classes | — (we report per-class AP for all 6) |
+| input resolution | 544² (Darknet), 1333×750 (Detectron2), 300² (SSD) | 640, and 1280 for the best models |
+| schedule | fixed 20k iterations (50k for SSD) | 100 epochs, early stopping patience 20 |
+| evaluator | COCO AP | COCO AP via pycocotools, maxDets 300 |
+
+The two-category version merges **human + buoy → `small_obj`** and **board + boat + sailboat + kayak → `large_obj`** (paper §3.1). That is a *semantic* merge, despite the names — it is **not** a threshold on box area. Reading `AP@50 Small Object` in Table 2 as "AP for small objects" in the COCO size sense is the natural misreading, and it is wrong.
+
+### A like-for-like bridge
+
+`afo/evaluate.py` can merge 6-class predictions into the paper's two classes, which makes the **class definition** identical even though the training is not. Every run in this repository reports it under `two_category` in `metrics.json`.
+
+| model | classes trained | AP | AP@50 | AP@50 small_obj | AP@50 large_obj |
+|---|---|---|---|---|---|
+| SSD300 (MobileNet v2) *paper* | 2 | 14.35 | 41.40 | 24.34 | 58.45 |
+| YOLOv3 (Darknet53) *paper* | 2 | 24.40 | 68.58 | 51.08 | 86.08 |
+| **YOLO11n @640** *this repo* | **6, merged after** | **31.57** | **70.12** | **53.45** | **86.80** |
+| YOLOv4 (CSPDarknet53-PANet-SPP) *paper* | 2 | 31.50 | 71.13 | 54.58 | 87.67 |
+| Faster R-CNN (R50-FPN) *paper* | 2 | 33.35 | 78.51 | 67.08 | 89.94 |
+| RetinaNet (R50) *paper* | 2 | 34.93 | 79.82 | 69.31 | 90.31 |
+| RetinaNet (R101) *paper* | 2 | 35.83 | 79.36 | 65.00 | 93.71 |
+| Faster R-CNN (R101-FPN) *paper* | 2 | 36.25 | 78.97 | 64.11 | 93.82 |
+| Best ensemble (paper's contribution) | 2 | **37.71** | **82.16** | 70.53 | 94.71 |
+
+A 2.6 M-parameter nano model from 2024 lands on YOLOv4 to within 0.1 AP, while carrying the handicap of having been trained to separate six classes rather than two. It remains **4–6 AP behind the two-stage Detectron2 baselines** and **6 AP behind the paper's ensemble**, and the gap is concentrated exactly where the paper said it would be: `small_obj` AP@50 of 53.5 against RetinaNet's 69.3.
+
+Caveats that keep this honest: the merged number comes from a 6-class model, so it is a **lower bound** on what the same architecture would reach trained on two classes; the resolutions and schedules differ; and it is one seed.
+
+---
+
 ## Citation
 
 ```bibtex

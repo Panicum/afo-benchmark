@@ -162,6 +162,7 @@ Checkpoints are **not** committed. Each best checkpoint is uploaded to Hugging F
 - [ ] **Seed-variance study.** Currently one run per model; the table cannot distinguish a 0.5-point difference from noise.
 - [ ] **A background-only evaluation set**, so false-alarm rate on empty water becomes measurable. The 720 train background images are the obvious source, but using them means deviating from the official split, so this needs its own protocol.
 - [ ] **A de-duplicated split variant**, quantifying what the 7 cross-split duplicate pairs (one of them val↔test) are worth.
+- [ ] **A two-category arm.** The paper's Table 2 is measured on the 2-class version of AFO (`small_obj` = human+buoy, `large_obj` = the four vessel classes). Every run here reports a post-hoc merge of its 6-class predictions under `two_category` in `metrics.json`, which fixes the class definition but not the training — the model still paid to separate six classes, so the merged figure is a **lower bound**. Training the same matrix directly on `2categories/` would make the comparison exact. See the README section "How this compares to the original paper".
 - [ ] **Cross-dataset generalisation** to SeaDronesSee and MOBDrone.
 - [ ] **Edge inference** (Jetson / NPU) FPS.
 - [ ] Higher resolutions than 1280, and tiled inference at native resolution.

@@ -35,7 +35,14 @@ Standardowe COCO (piksele oryginalu, dla porownania z innymi pracami):
   AP-M  0.1820
   AP-L  0.3268
 
+=== Wersja DWUKLASOWA (definicja klas jak w Tabeli 2 pracy) ===
+AP (50-95) 0.3157   AP@50 0.7012
+  small_obj  AP50-95 0.1629  AP@50 0.5345  n=6570
+  large_obj  AP50-95 0.4686  AP@50 0.8680  n=1069
+  Model uczony na 6 klasach, predykcje scalone po fakcie — nie to samo, co trening na wersji dwuklasowej.
+
 pomiar FPS...
-[fps] mediana 59.11 FPS end-to-end (zakres 55.0–59.15, rozrzut 7%, 3 przebiegi, odrzucony przebieg na zimno 59.85)
+[fps] mediana 63.23 FPS end-to-end (zakres 49.16–72.78, rozrzut 37%, 3 przebiegi, odrzucony przebieg na zimno 77.56)
+[fps] UWAGA: rozrzut powyzej 15% — GPU prawdopodobnie zmienia stan cieplny. Powtorz pomiar na ustabilizowanej maszynie.
 
 Zapisano C:\Users\Jan\Projects\afoDataset\results\yolo11n_640
