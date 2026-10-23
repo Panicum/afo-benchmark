@@ -6,9 +6,18 @@ The leaderboard is only worth reading if every row was produced the same way. Th
 
 ---
 
+## Pick an arm first
+
+There are **two leaderboards** and they are different tasks:
+
+- **6 classes** (`6categories/`) — the default. `results/<model>_<imgsz>/`.
+- **2 classes** (`2categories/`, `small_obj` vs `large_obj`) — the version the 2021 paper benchmarked. `results/<model>_<imgsz>_2cat/`, trained with `--categories 2categories`.
+
+Submit to whichever you ran. Do **not** submit a 6-class model's predictions collapsed into two classes as a two-class row — that is a different experiment and it scores about half a point of AP lower. The collapse is recorded automatically under `two_category` in every 6-class `metrics.json` and that is where it belongs.
+
 ## What a submission contains
 
-One directory, `results/<model>_<imgsz>/`, with four files:
+One directory, `results/<model>_<imgsz>[_2cat]/`, with four files:
 
 | file | what it is |
 |------|------------|

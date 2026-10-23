@@ -10,12 +10,29 @@ Status: **protocol fixed, runs in progress.** The leaderboard lives in [README.m
 
 - **Source:** `jgasienica/afo-dataset` on Hugging Face, downloaded to `~/.cache/afo`. No dataset files in this repository.
 - **Splits:** the **official** `train.txt` / `validation.txt` / `test.txt` as released. Never re-split, never re-balance, never de-duplicate.
-- **Labels:** `6categories/`, Darknet format, exported to COCO JSON by `scripts/export_coco.py`.
+- **Labels:** `6categories/` or `2categories/` depending on the arm (see below), Darknet format, exported to COCO JSON by `scripts/export_coco.py`.
 - **Coordinate clipping:** **on**. The 29 label lines with a coordinate outside `[0,1]` are clipped to `[0,1]` at load time. Source files are never rewritten.
 - **Classes:** 6, in the index order of `6categories.names`. Class 3 is spelled `bouy` in the released file; that spelling is authoritative for indices.
 - **`i3_200.jpg`** belongs to no split list and is used neither for training nor for evaluation.
 
 **Train on `train`. Select on `val`. Report on `test`. The test split is touched exactly once per model, after training has finished.**
+
+### Two label sets, two leaderboards
+
+AFO ships three label directories. Two are benchmarked here, and they are **separate tasks with separate tables**:
+
+| arm | labels | classes | why |
+|---|---|---|---|
+| **6-class** | `6categories/` | human, wind/sup-board, boat, bouy, sailboat, kayak | the harder task; no published baselines exist |
+| **2-class** | `2categories/` | `small_obj` = human+buoy, `large_obj` = board+boat+sailboat+kayak | the version the 2021 paper benchmarked; keeps results comparable to Table 2 of [doi:10.3233/ICA-210649](https://doi.org/10.3233/ICA-210649) |
+
+The two-class split is **semantic, not a box-area threshold**, despite the names (paper §3.1). Its `AP@50 Small Object` column is per-class AP for the merged class and must not be read as COCO's AP-small.
+
+A score on one arm says nothing about the other, so **rows are never mixed between the tables**. `scripts/make_leaderboard.py` routes each result by the `categories` field in its `metrics.json` and prints anything it could not place.
+
+Collapsing a 6-class model's predictions into the two-class scheme is recorded under `two_category` in every 6-class `metrics.json`, because it costs nothing and bounds the arm that was not run. It is **not** a two-class leaderboard row: measured on YOLO11n @640, it understates a real two-class run by 0.49 AP / 2.75 AP@50.
+
+`1category/` is left unbenchmarked for now.
 
 ### Pre-resizing (applies to every run)
 
@@ -56,6 +73,9 @@ All initialised from **COCO-pretrained** weights. No AFO-specific architecture c
 - **Model selection:** the checkpoint with the best **val** mAP50-95. Test is never used for selection.
 - **Batch size:** the largest power of two whose **measured peak allocation stays under 85% of physical VRAM**, probed per run and recorded in `train_config.yaml`. Gradient accumulation for RF-DETR at 1280 where needed.
 - **Augmentation:** each framework's **defaults**, unchanged. The exact resolved values are dumped into `results/<run>/train_config.yaml` so "defaults" is never an unverifiable claim. For Ultralytics these resolve to `mosaic=1.0` (closed for the last 10 epochs), `scale=0.5`, `translate=0.1`, `fliplr=0.5`, `flipud=0.0`, `hsv_h=0.015`, `hsv_s=0.7`, `hsv_v=0.4`, `erasing=0.4`, `mixup=0.0`, `copy_paste=0.0`, `degrees=0.0`.
+- **No per-model tuning.** The protocol is identical for everyone; a model that underperforms under it underperforms in the table.
+- **One run per model.** **Seed variance is not reported** — single-seed differences below roughly 1 mAP point should not be read as real. See TODO.
+- **Both arms use the identical recipe.** The only difference between a 6-class and a 2-class run is `--categories`.
 
 ### Why batch size is capped by measurement, not by OOM
 
@@ -64,8 +84,6 @@ On Windows the NVIDIA driver does **not** raise `OutOfMemoryError` when an alloc
 Measured on this project: RF-DETR base at 640 requested **22.8 GB on a 16 GB card** at batch 16 and took **2812 s/epoch against 437 s at batch 4** — 6.4× slower, with no warning of any kind. A budget built from that measurement would have been wrong by hours per model.
 
 So: "fits" means *measured peak ≤ 85% of physical VRAM*, never *no exception was raised*. This is enforced in [`afo/vram.py`](afo/vram.py), used by both the batch probe and the training scripts, and `scripts/estimate_budget.py` discards any calibration row whose peak exceeded physical VRAM.
-- **No per-model tuning.** The protocol is identical for everyone; a model that underperforms under it underperforms in the table.
-- **One run per model.** **Seed variance is not reported** — single-seed differences below roughly 1 mAP point should not be read as real. See TODO.
 
 ---
 
@@ -112,21 +130,27 @@ This is the **laptop** part, not a desktop 4090: **76 SMs against 128**, a lower
 
 Calibrated on this GPU against the pre-resized dataset (2 or 3 timed epochs each):
 
-| model | imgsz | batch | s/epoch | peak VRAM |
-|---|---|---|---|---|
-| `yolo11m` | 640 | 16 | 88 | 8.0 GB |
-| `yolo11s` | 1280 | 8 | 166 | — |
-| `rfdetr-nano` | 640 | 8 | 154 | 8.1 GB |
-| `rfdetr-base` | 640 | 8 | **238** | 11.8 GB |
+**Short calibrations overestimate badly — use completed runs.** Timing 2–3 epochs amortises dataset scanning, label caching and model setup over too few epochs. Calibration put `yolo11n` @640 at 78 s/epoch; the completed 100-epoch run came in at **26 s/epoch** (0.72 h total), a 3× overestimate. Every RF-DETR figure below is still from a 2-epoch calibration and is therefore an **upper bound** of unknown tightness.
 
-The RF-DETR base row is the clearest illustration of the VRAM rule above: the same model takes **238 s/epoch at batch 8**, 437 s at batch 4 (GPU underused), and 2812 s at batch 16 (thrashing). Batch 8 is both the largest that fits and the fastest; finding it saved ~14 h of the total budget.
+| model | arm | imgsz | batch | s/epoch | source |
+|---|---|---|---|---|---|
+| `yolo11n` | 6-class | 640 | 64 | **26** | completed 100-epoch run (0.72 h) |
+| `yolo11n` | 2-class | 640 | 64 | **23** | completed 100-epoch run (0.65 h) |
+| `yolo11m` | — | 640 | 16 | 88 | 3-epoch calibration (upper bound) |
+| `yolo11s` | — | 1280 | 8 | 166 | 3-epoch calibration (upper bound) |
+| `rfdetr-nano` | — | 640 | 8 | 154 | 2-epoch calibration (upper bound) |
+| `rfdetr-base` | — | 640 | 8 | 238 | 2-epoch calibration (upper bound) |
 
-The full matrix is roughly **42 h** of GPU time at a 100-epoch budget (53 h if nothing early-stops). Because this is a laptop that is also a working machine, runs go **one model at a time, lightest first**, with the heavy RF-DETR rows deferred to days when the machine is free:
+The RF-DETR base row also illustrates the VRAM rule above: the same model takes 238 s/epoch at batch 8, 437 s at batch 4 (GPU underused), and 2812 s at batch 16 (thrashing). Batch 8 is both the largest that fits and the fastest.
 
-1. YOLOv8 n/s/m and YOLO11 n/s/m at 640 — ~1.6–1.8 h each, ~10 h total
-2. RT-DETR-l at 640, RF-DETR nano at 640, best YOLO at 1280 — ~3–4 h each
-3. RF-DETR small at 640 — ~4 h
-4. RF-DETR base at 640, then at 1280 — ~5 h and ~11 h, run only on free days
+**Budget.** With two arms the matrix doubles, but the corrected YOLO timing more than pays for it: a YOLO run at 640 costs ~0.7 h, not the ~2.2 h first estimated. Twelve YOLO runs (six models × two arms) come to roughly **8–9 h**. The RF-DETR and 1280 rows dominate what remains and are still estimated from short calibrations.
+
+Because this is a laptop that is also a working machine, runs go **one model at a time, lightest first**, with the heavy rows deferred to days when the machine is free:
+
+1. YOLOv8 n/s/m and YOLO11 n/s/m at 640, both arms — ~0.7 h each, ~8–9 h total
+2. RT-DETR-l at 640, RF-DETR nano at 640, best YOLO at 1280
+3. RF-DETR small at 640
+4. RF-DETR base at 640, then at 1280 — only on free days
 
 The order is a scheduling decision and has no effect on any reported number; every run follows the identical protocol regardless of when it executes.
 
@@ -162,7 +186,7 @@ Checkpoints are **not** committed. Each best checkpoint is uploaded to Hugging F
 - [ ] **Seed-variance study.** Currently one run per model; the table cannot distinguish a 0.5-point difference from noise.
 - [ ] **A background-only evaluation set**, so false-alarm rate on empty water becomes measurable. The 720 train background images are the obvious source, but using them means deviating from the official split, so this needs its own protocol.
 - [ ] **A de-duplicated split variant**, quantifying what the 7 cross-split duplicate pairs (one of them val↔test) are worth.
-- [ ] **A two-category arm.** The paper's Table 2 is measured on the 2-class version of AFO (`small_obj` = human+buoy, `large_obj` = the four vessel classes). Every run here reports a post-hoc merge of its 6-class predictions under `two_category` in `metrics.json`, which fixes the class definition but not the training — the model still paid to separate six classes, so the merged figure is a **lower bound**. Training the same matrix directly on `2categories/` would make the comparison exact. See the README section "How this compares to the original paper".
+- [ ] **A one-class arm** on `1category/`, the third label set the dataset ships. Pure "is there anything in the water", the weakest-supervision version of the task.
 - [ ] **Cross-dataset generalisation** to SeaDronesSee and MOBDrone.
 - [ ] **Edge inference** (Jetson / NPU) FPS.
 - [ ] Higher resolutions than 1280, and tiled inference at native resolution.
