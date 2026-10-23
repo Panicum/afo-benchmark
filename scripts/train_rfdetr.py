@@ -208,25 +208,10 @@ def main() -> None:
         metrics["two_category"] = evaluate_two_category(gt, pred_path, imgsz=args.imgsz)
 
     # --- FPS -----------------------------------------------------------------
-    print("\npomiar FPS...")
-    from afo.fps import WARMUP_IMAGES, time_predict_fn
-
-    runs = [time_predict_fn(lambda p: infer.predict(p, threshold=0.25), files, WARMUP_IMAGES)
-            for _ in range(3)]
-    e2e = sorted(r["fps"] for r in runs[1:])  # pierwszy przebieg na zimno odrzucony
-    import statistics
-
-    metrics["speed"] = {
-        "gpu": str(gpu), "imgsz": args.imgsz, "precision": "fp16", "batch": 1,
-        "warmup_images": WARMUP_IMAGES, "timed_images": runs[-1]["timed_images"],
-        "repeats": len(e2e), "warmup_run_discarded_fps": runs[0]["fps"],
-        "end_to_end": {**{k: v for k, v in runs[-1].items() if k.endswith("_ms")},
-                       "fps": round(statistics.median(e2e), 2),
-                       "fps_min": min(e2e), "fps_max": max(e2e), "fps_all": e2e},
-        "note": f"{gpu} — czesc LAPTOPOWA, podatna na throttling termiczny.",
-    }
-    print(f"[fps] mediana {metrics['speed']['end_to_end']['fps']} FPS "
-          f"(zakres {min(e2e)}–{max(e2e)}, odrzucony na zimno {runs[0]['fps']})")
+    # Jak w torze Ultralytics: pomiar zaraz po treningu bylby pomiarem goracej
+    # karty, nie modelu. Zmierzyc osobno, po cool-downie.
+    metrics["speed"] = None
+    print("\n[fps] pominiete — zmierz osobnym przebiegiem po cool-downie")
 
     n_params = sum(p.numel() for p in infer.model.model.parameters())
     metrics["model"] = model_name

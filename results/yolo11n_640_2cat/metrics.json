@@ -1,6 +1,6 @@
 {
   "gt_json": "C:\\Users\\Jan\\.cache\\afo\\coco2cat\\test.json",
-  "dt_json": "C:\\Users\\Jan\\Projects\\afoDataset\\results\\yolo11n_640_2cat\\predictions_test.json",
+  "dt_json": "results\\yolo11n_640_2cat\\predictions_test.json",
   "imgsz": 640,
   "n_images": 514,
   "n_gt_objects": 7639,
@@ -50,7 +50,24 @@
       "n_gt": 0
     }
   },
-  "afo_buckets_note": "Pola mierzone po przeskalowaniu do imgsz=640; kubelkow NIE wolno porownywac miedzy roznymi imgsz (inna populacja obiektow).",
+  "afo_buckets_reference_side": 640,
+  "afo_buckets_note": "Pola mierzone po przeskalowaniu kazdego obrazu do dluzszego boku 640 px. Skala jest stala i niezalezna od imgsz, wiec kubelki opisuja te sama populacje obiektow we wszystkich biegach i SA porownywalne miedzy 640 a 1280.",
+  "operating_point": {
+    "threshold": 0.42,
+    "precision": 0.7409562755583516,
+    "recall": 0.6167037570362612,
+    "f1": 0.673144245195399,
+    "tp": 4711,
+    "fp": 1647,
+    "fn": 2928,
+    "fp_per_image": 3.2042801556420235,
+    "fn_per_image": 5.696498054474708,
+    "n_images": 514,
+    "n_gt_objects": 7639,
+    "iou_threshold": 0.5,
+    "class_agnostic": true,
+    "note": "Prog maksymalizujacy F1 na zbiorze TESTOWYM \u2014 to gorna granica tego, co da sie osiagnac, bo prog dobrany na tych samych danych, na ktorych jest mierzony. Do wdrozenia prog dobiera sie na walidacji."
+  },
   "categories": "2categories",
   "speed": {
     "gpu": "NVIDIA GeForce RTX 4090 Laptop GPU",
@@ -90,10 +107,10 @@
     "warmup_run_discarded_fps": 61.44,
     "fps_spread_pct": 21.1
   },
-  "model": "yolo11n",
-  "framework": "ultralytics",
   "params_M": 2.61,
   "gflops": 6.6,
+  "model": "yolo11n",
+  "framework": "ultralytics",
   "train": {
     "epochs_budget": 100,
     "patience": 20,

@@ -1,13 +1,19 @@
 """Jeden ewaluator dla wszystkich modeli benchmarku AFO.
 
 pycocotools na oficjalnym tescie. Liczy mAP50, mAP50-95, AP na klase,
-AP w kubelkach rozmiaru AFO (mierzonych W PIKSELACH WEJSCIA MODELU) oraz
-standardowe COCO AP-S/M/L (w pikselach oryginalu, dla porownywalnosci).
+AP w kubelkach rozmiaru AFO (w STALEJ skali referencyjnej, patrz
+``REFERENCE_SIDE``) oraz standardowe COCO AP-S/M/L (w pikselach oryginalu,
+dla porownywalnosci z innymi pracami).
 
 Sztuczka z kubelkami: IoU jest niezmiennicze wzgledem jednolitego skalowania,
-wiec zamiast skalowac ramki wystarczy przeskalowac pole `area` o (imgsz/max(W,H))^2
+wiec zamiast skalowac ramki wystarczy przeskalowac pole `area` o kwadrat skali
 i podac progi areaRng w tej samej skali. Dopasowania sa identyczne, a filtr
-rozmiaru dziala w skali, ktora widzi detektor.
+rozmiaru dziala w wybranej skali.
+
+Osobno liczona jest diagnostyka PUNKTU PRACY: mAP jest bezprogowe, a wdrozenie
+SAR chodzi na jednym progu ufnosci. ``operating_point`` podaje prog
+maksymalizujacy F1 oraz liczbe falszywych alarmow na obraz przy tym progu —
+liczbe, ktorej z AP nie widac.
 """
 
 from __future__ import annotations
@@ -20,7 +26,19 @@ from typing import Any, Sequence
 
 import numpy as np
 
-#: kubelki AFO, progi jako (dolny bok, gorny bok) w pikselach wejscia modelu
+#: Dluzszy bok SKALI REFERENCYJNEJ, w ktorej mierzone sa kubelki rozmiaru.
+#:
+#: Kluczowa decyzja: skala jest STALA i niezalezna od imgsz, z jakim model byl
+#: uczony. Gdyby kubelki liczyc w pikselach wejscia modelu, ten sam obiekt
+#: bylby "tiny" przy 640 i "small" przy 1280 — czyli AP-tiny z dwoch biegow
+#: opisywaloby inne populacje i nie dalo sie ich porownac. A porownanie 640
+#: wobec 1280 jest calym sensem tych biegow.
+#:
+#: 640 jako odniesienie, bo to podstawowa rozdzielczosc benchmarku; wartosc
+#: jest umowna, wazne, ze jedna dla wszystkich wierszy tabeli.
+REFERENCE_SIDE = 640
+
+#: kubelki AFO, progi jako (dolny bok, gorny bok) w pikselach skali referencyjnej
 AFO_BUCKETS: tuple[tuple[str, float, float], ...] = (
     ("tiny", 0.0, 16.0),
     ("small", 16.0, 32.0),
@@ -71,6 +89,94 @@ def _scale_areas(coco_dict_or_obj, scale_by_img: dict[int, float], is_gt: bool):
         ann["area"] = ann["area"] * s * s
 
 
+def operating_point(
+    gt_doc: dict,
+    dets: list[dict],
+    iou_thr: float = 0.5,
+    n_steps: int = 99,
+) -> dict[str, Any]:
+    """Prog ufnosci maksymalizujacy F1 i liczba falszywych alarmow na obraz.
+
+    Po co, skoro jest mAP: AP jest BEZPROGOWE — calkuje po calej krzywej
+    precision-recall. Wdrozony system SAR chodzi na jednym, konkretnym progu,
+    i wtedy liczy sie "ile razy na kadr detektor pokaze cos, czego nie ma".
+    Tej liczby w AP nie widac, a to ona decyduje, czy operator ufa systemowi.
+
+    Dopasowanie zachlanne po malejacej ufnosci, IoU 0,5, BEZ rozroznienia klas:
+    w SAR wykrycie obiektu jest wazniejsze niz przypisanie kategorii.
+    """
+    boxes_by_img: dict[int, list[tuple[float, float, float, float]]] = {}
+    for a in gt_doc["annotations"]:
+        x, y, w, h = a["bbox"]
+        boxes_by_img.setdefault(a["image_id"], []).append((x, y, x + w, y + h))
+    n_images = len(gt_doc["images"])
+    n_gt = sum(len(v) for v in boxes_by_img.values())
+    if not dets or not n_gt:
+        return {"threshold": float("nan"), "note": "brak detekcji albo brak GT"}
+
+    dets_by_img: dict[int, list[tuple[float, tuple]]] = {}
+    for d in dets:
+        x, y, w, h = d["bbox"]
+        dets_by_img.setdefault(d["image_id"], []).append(
+            (float(d["score"]), (x, y, x + w, y + h))
+        )
+
+    def iou(a, b) -> float:
+        ix1, iy1 = max(a[0], b[0]), max(a[1], b[1])
+        ix2, iy2 = min(a[2], b[2]), min(a[3], b[3])
+        iw, ih = max(0.0, ix2 - ix1), max(0.0, iy2 - iy1)
+        inter = iw * ih
+        if inter <= 0:
+            return 0.0
+        ua = (a[2] - a[0]) * (a[3] - a[1]) + (b[2] - b[0]) * (b[3] - b[1]) - inter
+        return inter / ua if ua > 0 else 0.0
+
+    # dla kazdej detekcji: najwyzszy prog, przy ktorym nadal jest TP
+    scored: list[tuple[float, bool]] = []
+    for img_id, dd in dets_by_img.items():
+        gts = list(boxes_by_img.get(img_id, []))
+        used = [False] * len(gts)
+        for score, box in sorted(dd, key=lambda t: -t[0]):
+            best_i, best_v = -1, iou_thr
+            for i, g in enumerate(gts):
+                if used[i]:
+                    continue
+                v = iou(box, g)
+                if v >= best_v:
+                    best_i, best_v = i, v
+            if best_i >= 0:
+                used[best_i] = True
+                scored.append((score, True))
+            else:
+                scored.append((score, False))
+
+    best = {"f1": -1.0}
+    for k in range(1, n_steps + 1):
+        thr = k / (n_steps + 1)
+        tp = sum(1 for s, ok in scored if s >= thr and ok)
+        fp = sum(1 for s, ok in scored if s >= thr and not ok)
+        fn = n_gt - tp
+        prec = tp / (tp + fp) if tp + fp else 0.0
+        rec = tp / n_gt
+        f1 = 2 * prec * rec / (prec + rec) if prec + rec else 0.0
+        if f1 > best["f1"]:
+            best = {
+                "threshold": round(thr, 3), "precision": prec, "recall": rec, "f1": f1,
+                "tp": tp, "fp": fp, "fn": fn,
+                "fp_per_image": fp / n_images, "fn_per_image": fn / n_images,
+            }
+    best["n_images"] = n_images
+    best["n_gt_objects"] = n_gt
+    best["iou_threshold"] = iou_thr
+    best["class_agnostic"] = True
+    best["note"] = (
+        "Prog maksymalizujacy F1 na zbiorze TESTOWYM — to gorna granica tego, co "
+        "da sie osiagnac, bo prog dobrany na tych samych danych, na ktorych jest "
+        "mierzony. Do wdrozenia prog dobiera sie na walidacji."
+    )
+    return best
+
+
 def evaluate(
     gt_json: Path | str,
     dt_json: Path | str,
@@ -84,8 +190,10 @@ def evaluate(
     ---------
     gt_json : COCO JSON zbioru testowego (z ``scripts/export_coco.py``)
     dt_json : predykcje w formacie COCO detection results
-    imgsz   : rozdzielczosc wejscia modelu — potrzebna do kubelkow AFO.
-              None wylacza kubelki AFO (zostaja tylko standardowe COCO).
+    imgsz   : rozdzielczosc wejscia modelu. Zapisywana w wyniku jako metadana;
+              NIE wplywa na kubelki rozmiaru — te licza sie zawsze w skali
+              referencyjnej REFERENCE_SIDE, zeby byly porownywalne miedzy
+              biegami o roznym imgsz.
     """
     from pycocotools.coco import COCO
     from pycocotools.cocoeval import COCOeval
@@ -153,10 +261,11 @@ def evaluate(
         for k, n in enumerate(names)
     }
 
-    # --- 2. kubelki AFO w skali wejscia modelu ----------------------------
-    if imgsz:
+    # --- 2. kubelki AFO w stalej skali referencyjnej -----------------------
+    if True:
         scale = {
-            img_id: imgsz / max(img["width"], img["height"]) for img_id, img in gt.imgs.items()
+            img_id: REFERENCE_SIDE / max(img["width"], img["height"])
+            for img_id, img in gt.imgs.items()
         }
         with contextlib.redirect_stdout(io.StringIO()):
             gt_s = COCO(str(gt_json))
@@ -188,10 +297,21 @@ def evaluate(
             }
             for i, (name, _, _) in enumerate(AFO_BUCKETS, start=1)
         }
+        result["afo_buckets_reference_side"] = REFERENCE_SIDE
         result["afo_buckets_note"] = (
-            f"Pola mierzone po przeskalowaniu do imgsz={imgsz}; kubelkow NIE wolno "
-            f"porownywac miedzy roznymi imgsz (inna populacja obiektow)."
+            f"Pola mierzone po przeskalowaniu kazdego obrazu do dluzszego boku "
+            f"{REFERENCE_SIDE} px. Skala jest stala i niezalezna od imgsz, wiec "
+            f"kubelki opisuja te sama populacje obiektow we wszystkich biegach "
+            f"i SA porownywalne miedzy 640 a 1280."
         )
+
+    # diagnostyka punktu pracy — liczba, ktorej mAP nie pokazuje
+    try:
+        result["operating_point"] = operating_point(
+            json.loads(gt_json.read_text(encoding="utf-8")), dets
+        )
+    except Exception as exc:  # diagnostyka nie moze wywrocic ewaluacji
+        print(f"UWAGA: nie udalo sie policzyc punktu pracy ({type(exc).__name__}: {exc})")
 
     if verbose:
         print_report(result)
@@ -213,16 +333,26 @@ def print_report(r: dict[str, Any]) -> None:
         print(f"  {name:16s} {d['AP50_95']:.4f}  {d['AP50']:.4f}   n={d['n_gt']:5d}")
 
     if "afo_buckets" in r:
-        print(f"\nKubelki AFO (w pikselach wejscia, imgsz={r['imgsz']}):")
+        ref = r.get("afo_buckets_reference_side", REFERENCE_SIDE)
+        print(f"\nKubelki AFO (stala skala referencyjna: dluzszy bok {ref} px):")
         for name, d in r["afo_buckets"].items():
             ap = "   —  " if np.isnan(d["AP50_95"]) else f"{d['AP50_95']:.4f}"
             print(f"  {name:8s} AP50-95 {ap}   n={d['n_gt']:5d}")
-        print("  UWAGA: nieporownywalne miedzy roznymi imgsz.")
+        print("  Skala stala — porownywalne miedzy biegami o roznym imgsz.")
 
     print("\nStandardowe COCO (piksele oryginalu, dla porownania z innymi pracami):")
     for b, _, _ in COCO_BUCKETS:
         v = r.get(f"AP_{b}_coco", float("nan"))
         print(f"  AP-{b}  {'  —  ' if np.isnan(v) else f'{v:.4f}'}")
+
+    if "operating_point" in r:
+        op = r["operating_point"]
+        print("\nPunkt pracy (prog maksymalizujacy F1, IoU 0,5, bez rozroznienia klas):")
+        print(f"  prog ufnosci  {op['threshold']:.3f}")
+        print(f"  precyzja {op['precision']:.4f}   recall {op['recall']:.4f}   "
+              f"F1 {op['f1']:.4f}")
+        print(f"  falszywych alarmow na obraz: {op['fp_per_image']:.2f}   "
+              f"przeoczen na obraz: {op['fn_per_image']:.2f}")
 
 
 #: Wersja dwuklasowa z pracy (sekcja 3.1): human+buoy -> small_obj,

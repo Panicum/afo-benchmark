@@ -29,11 +29,64 @@ def _percentiles(xs: list[float]) -> dict[str, float]:
     }
 
 
-#: Ile razy powtorzyc caly przebieg. Pojedynczy pomiar na laptopie zalezy od
-#: stanu cieplnego: te same wagi dawaly 43,8 FPS tuz po 45-minutowym treningu
-#: i 76,2 FPS na zimno (rozrzut 74%). Powtorzenia pod rzad trzymaja sie w 3%,
-#: wiec raportujemy MEDIANE z kilku przebiegow plus zakres.
+#: Ile razy powtorzyc caly przebieg; raportujemy mediane plus zakres.
 DEFAULT_REPEATS = 4
+
+#: Temperatura GPU, ponizej ktorej uznajemy karte za wychlodzona.
+#:
+#: To NIE jest kwestia rozgrzewki, tylko throttlingu. Te same wagi dawaly
+#: 43,8 FPS tuz po 45-minutowym treningu i 76,2 FPS na zimnej karcie — bo
+#: gorace GPU laptopa obniza zegary. Odrzucenie pierwszego przebiegu tego nie
+#: leczy, skoro kolejne tez sa gorace. Jedyne uczciwe wyjscie to zmierzyc po
+#: wychlodzeniu i zapisac temperature oraz zegar OBOK wyniku.
+COOLDOWN_TEMP_C = 50
+COOLDOWN_MAX_WAIT_S = 900
+COOLDOWN_POLL_S = 15
+
+
+def gpu_state() -> dict[str, float | None]:
+    """Temperatura, zegar SM i pobor mocy z nvidia-smi."""
+    import subprocess
+
+    try:
+        out = subprocess.check_output(
+            ["nvidia-smi", "--query-gpu=temperature.gpu,clocks.sm,power.draw",
+             "--format=csv,noheader,nounits"],
+            text=True, stderr=subprocess.DEVNULL, timeout=20,
+        ).strip().splitlines()[0]
+        t, c, p = (x.strip() for x in out.split(","))
+        return {"temp_c": float(t), "clock_sm_mhz": float(c),
+                "power_w": None if p.upper().startswith("N") else float(p)}
+    except Exception:
+        return {"temp_c": None, "clock_sm_mhz": None, "power_w": None}
+
+
+def wait_for_cooldown(
+    target_c: float = COOLDOWN_TEMP_C,
+    max_wait_s: int = COOLDOWN_MAX_WAIT_S,
+    poll_s: int = COOLDOWN_POLL_S,
+) -> dict:
+    """Czeka, az GPU zejdzie ponizej ``target_c``. Zwraca, co zastal."""
+    t0 = time.perf_counter()
+    st = gpu_state()
+    if st["temp_c"] is None:
+        print("[fps] nie udalo sie odczytac temperatury — pomijam cool-down")
+        return {"waited_s": 0, "reached": None, **st}
+    start_temp = st["temp_c"]
+    while st["temp_c"] is not None and st["temp_c"] > target_c:
+        waited = time.perf_counter() - t0
+        if waited > max_wait_s:
+            print(f"[fps] cool-down przerwany po {waited/60:.1f} min — "
+                  f"{st['temp_c']:.0f} °C, cel {target_c} °C. Wynik bedzie zanizony.")
+            break
+        print(f"[fps] cool-down: {st['temp_c']:.0f} °C > {target_c} °C, "
+              f"czekam ({waited/60:.1f} min)...", flush=True)
+        time.sleep(poll_s)
+        st = gpu_state()
+    waited = time.perf_counter() - t0
+    print(f"[fps] start pomiaru przy {st['temp_c']:.0f} °C, "
+          f"zegar {st['clock_sm_mhz']:.0f} MHz (czekano {waited/60:.1f} min)")
+    return {"waited_s": round(waited, 1), "start_temp_c": start_temp, "reached": True, **st}
 
 
 def measure_fps(
@@ -44,24 +97,26 @@ def measure_fps(
     half: bool = True,
     max_images: int | None = None,
     repeats: int = DEFAULT_REPEATS,
+    cooldown: bool = True,
+    cooldown_temp_c: float = COOLDOWN_TEMP_C,
 ) -> dict:
-    """Mierzy FPS modelu Ultralytics na zbiorze testowym (mediana z ``repeats``)."""
+    """Mierzy FPS modelu Ultralytics na zbiorze testowym (mediana z ``repeats``).
+
+    Przed pomiarem czeka na wychlodzenie karty i zapisuje jej stan cieplny —
+    bez tego liczba mowi wiecej o tym, co dzialo sie wczesniej, niz o modelu.
+    """
+    thermal = wait_for_cooldown(cooldown_temp_c) if cooldown else {"skipped": True}
     n = max(1, repeats)
     runs = [_measure_once(weights, imgsz, images_dir, warmup, half, max_images) for _ in range(n)]
-
-    # Pierwszy przebieg idzie na zimnym GPU i systematycznie zanizza wynik
-    # (zmierzone: 51,7 wobec 71,1 FPS w kolejnych). Przy >=3 powtorzeniach
-    # traktujemy go jako rozgrzewke cieplna i odrzucamy.
+    thermal_after = gpu_state()
     dropped = None
-    if n >= 3:
-        dropped = runs[0]["end_to_end"]["fps"]
-        runs = runs[1:]
 
     e2e = sorted(r["end_to_end"]["fps"] for r in runs)
     fwd = sorted(r["forward_only"]["fps"] for r in runs)
     out = dict(runs[-1])
     out["repeats"] = len(runs)
-    out["warmup_run_discarded_fps"] = dropped
+    out["thermal_before"] = thermal
+    out["thermal_after"] = thermal_after
     out["end_to_end"] = {
         **runs[0]["end_to_end"],
         "fps": round(statistics.median(e2e), 2),
@@ -78,16 +133,16 @@ def measure_fps(
     }
     spread = 100 * (max(e2e) - min(e2e)) / max(statistics.median(e2e), 1e-9)
     out["fps_spread_pct"] = round(spread, 1)
-    extra = f", odrzucony przebieg na zimno {dropped}" if dropped is not None else ""
+    t_a = thermal_after.get("temp_c")
     print(
         f"[fps] mediana {out['end_to_end']['fps']} FPS end-to-end "
-        f"(zakres {min(e2e)}–{max(e2e)}, rozrzut {spread:.0f}%, "
-        f"{len(runs)} przebiegi{extra})"
+        f"(zakres {min(e2e)}–{max(e2e)}, rozrzut {spread:.0f}%, {len(runs)} przebiegi"
+        + (f", {t_a:.0f} °C po pomiarze" if t_a else "") + ")"
     )
     if spread > 15:
         print(
-            "[fps] UWAGA: rozrzut powyzej 15% — GPU prawdopodobnie zmienia stan cieplny. "
-            "Powtorz pomiar na ustabilizowanej maszynie."
+            "[fps] UWAGA: rozrzut powyzej 15% — karta zmienia zegary w trakcie pomiaru. "
+            "Wydluz cool-down albo ustaw profil wysokiej wydajnosci."
         )
     return out
 

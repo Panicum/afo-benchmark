@@ -65,7 +65,7 @@ Produced by the reproducible benchmark at **[github.com/jgasienica/afo-dataset](
 | medium | 32²–96² | 0.3898 | 285 |
 | large | > 96² | — (no objects) | 0 |
 
-Boxes are scaled by `imgsz / max(W, H)` before bucketing, because AFO images are 2.5K–4K and in native pixels the `tiny` bucket would hold 15 objects in the whole dataset. **These columns are not comparable across different `imgsz`** — they describe different populations of objects.
+Every image is rescaled to a **fixed 640 px longest side** before bucketing, because AFO images are 2.5K–4K and in native pixels the `tiny` bucket would hold 15 objects in the whole dataset. The scale is deliberately independent of the training resolution, so these columns **are** comparable across runs at different `imgsz`.
 
 ## Training
 
@@ -109,7 +109,7 @@ Classes, in index order: `human`, `wind/sup-board`, `boat`, `bouy`, `sailboat`, 
 
 ## Limitations — read before deploying
 
-- **No metric here measures false alarms.** The AFO test split contains **zero background images** (train has 720, val 8). A detector that fires on wave crests, foam or sun glint is not penalised by any number above. For maritime SAR that is the most expensive error class, and it is unmeasured by construction.
+- **mAP is threshold-free; deployment is not.** AP integrates the whole precision-recall curve, while a fielded system runs at one confidence threshold. False alarms *are* penalised by mAP (any detection not matching a ground-truth box lowers precision, and the test split is overwhelmingly open water by area), but the number an operator cares about — false alarms per frame at the chosen threshold — is not visible in AP. The `operating_point` block in `metrics.json` reports it.
 - **The dataset is heavily imbalanced**: `human` is 83% of all objects, `sailboat` 0.4%. Treat the per-class table as the real result; mAP averages over classes that have very different support.
 - **One run, one seed.** No variance estimate. Differences under roughly 1 mAP point against another row should not be read as real.
 - **Val-to-test gap is large by design.** The test split is nine videos absent from train and val, so these numbers describe generalisation to unseen scenes, not to unseen frames.

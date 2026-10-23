@@ -44,7 +44,14 @@ Labels are normalised, so they are unchanged. Both benchmark resolutions (640 an
 
 ### What the test split cannot measure
 
-The test split contains **zero background images** (train has 720, val 8). No number on this leaderboard measures false alarms on empty water. A detector that fires on wave crests, sun glint or foam is not penalised anywhere in the table. For a maritime SAR dataset this is the most expensive error class, and it is unmeasured by construction. Treat every mAP in the table as "accuracy given that something is there".
+The test split contains **zero background images** (train has 720, val 8). It is tempting to conclude that false alarms on water therefore go unmeasured. **That conclusion is wrong**, and it was in an earlier draft of this file.
+
+This is detection, not classification. Every detection that matches no ground-truth box counts as a false positive and lowers precision, regardless of whether the frame contains other objects. The median AFO object covers 0.085% of its frame, so the test split is overwhelmingly open water by area — there is no shortage of water on which a detector can be caught firing. mAP penalises wave-crest detections correctly.
+
+What the absence of empty frames actually costs is narrower and worth stating precisely:
+
+1. **The operational figure is not measured directly.** "How many false alarms will an operator see per patrol frame" is naturally expressed on frames with nothing in them, and there are none in test. It is estimable from the annotated frames, which is what the operating-point diagnostic in §4 does.
+2. **mAP is threshold-free; deployment is not.** AP integrates over the whole precision-recall curve. A fielded SAR system runs at one confidence threshold, and the thing that decides whether an operator trusts it — false alarms per frame at that threshold — is invisible in AP. This gap is real and has nothing to do with background images; it would exist even if test were half empty frames.
 
 Training uses the full official train split, background images included — 25.8% of it is free negative supervision, and removing it would deviate from the protocol.
 
@@ -74,7 +81,7 @@ All initialised from **COCO-pretrained** weights. No AFO-specific architecture c
 - **Batch size:** the largest power of two whose **measured peak allocation stays under 85% of physical VRAM**, probed per run and recorded in `train_config.yaml`. Gradient accumulation for RF-DETR at 1280 where needed.
 - **Augmentation:** each framework's **defaults**, unchanged. The exact resolved values are dumped into `results/<run>/train_config.yaml` so "defaults" is never an unverifiable claim. For Ultralytics these resolve to `mosaic=1.0` (closed for the last 10 epochs), `scale=0.5`, `translate=0.1`, `fliplr=0.5`, `flipud=0.0`, `hsv_h=0.015`, `hsv_s=0.7`, `hsv_v=0.4`, `erasing=0.4`, `mixup=0.0`, `copy_paste=0.0`, `degrees=0.0`.
 - **No per-model tuning.** The protocol is identical for everyone; a model that underperforms under it underperforms in the table.
-- **One run per model.** **Seed variance is not reported** — single-seed differences below roughly 1 mAP point should not be read as real. See TODO.
+- **One run per model**, with one exception: the model that ends up at the **top of each leaderboard is re-run with three seeds**, so the headline number carries a spread instead of resting on a single draw. Everything else is single-seed, and single-seed differences below roughly 1 mAP point should not be read as real. (Observed: `yolo11n` and `yolov8n` at 640 differ by 0.16 points — that is a tie, not a ranking.)
 - **Both arms use the identical recipe.** The only difference between a 6-class and a 2-class run is `--categories`.
 
 ### Why batch size is capped by measurement, not by OOM
@@ -97,26 +104,34 @@ Reported per run:
 - **per-class AP50-95** — mandatory, because `human` is 83% of objects and a good mAP can hide four dead classes
 - **AP by object size** — see below
 - **params (M)**, **GFLOPs**
-- **FPS**, batch 1, FP16, on the GPU named below, averaged over the test split after 50 warm-up images, with `torch.cuda.synchronize()` around each timing so the figure is computation and not queueing. Reported twice: **end-to-end** (preprocess + forward + NMS) and **forward only**; the first is what runs on a boat.
+- **FPS**, batch 1, FP16, on the GPU named below, averaged over the test split after 50 warm-up images, with `torch.cuda.synchronize()` around each timing so the figure is computation and not queueing. Reported twice: **end-to-end** (preprocess + forward + NMS) and **forward only**; the first is what runs on a boat. **Measured in a separate pass after training, not at the end of a run** — see §5.
 
 **Detections per image: 300, not COCO's 100.** AFO is dense — up to 94 objects in one image, and 304 images hold 40 or more. At a cap of 100, a handful of confident false positives can push true positives past the cut and depress recall. `mAP50-95` at the COCO cap of 100 is reported alongside as `mAP50_95_maxdets100`.
 
-### Size buckets — measured at the model's input resolution
+### Size buckets — a fixed reference scale
 
-Boxes are scaled by `imgsz / max(W, H)` — exactly what the detector's letterbox does — **before** being assigned to a bucket:
+Every image is rescaled to a **640 px longest side** before its boxes are bucketed. The scale is a constant of the benchmark (`afo.evaluate.REFERENCE_SIDE`) and is **deliberately independent of the resolution the model was trained at**:
 
-| bucket | √area at model input |
-|--------|----------------------|
+| bucket | √area at the 640 px reference scale |
+|--------|-------------------------------------|
 | tiny | < 16² px |
 | small | 16² – 32² px |
 | medium | 32² – 96² px |
 | large | > 96² px |
 
-**Why not native pixels.** AFO images are 2.5K–4K, so in native pixels 98.7% of objects are medium or large and the `tiny` bucket holds **15 objects in the entire dataset**. AP computed on 15 objects is noise, not a measurement. Measured at the input the detector actually sees, the same buckets separate the data: at 640 the test split is 57.8% tiny / 38.4% small / 3.8% medium / 0.0% large; at 1280 it is 4.6 / 53.2 / 41.8 / 0.4.
+**Why not native pixels.** AFO images are 2.5K–4K, so in native pixels 98.7% of objects are medium or large and the `tiny` bucket holds **15 objects in the entire dataset**. AP computed on 15 objects is noise, not a measurement. At the reference scale the buckets separate the data properly: the test split is 57.8% tiny / 38.4% small / 3.8% medium.
 
-**Consequence, stated plainly: `AP-tiny` at 640 and `AP-tiny` at 1280 are computed over different populations of objects and must not be compared to each other across resolutions.** Within one resolution the column is comparable across models, which is what the leaderboard ranks. Every size column in the table carries its object count.
+**Why not the model's own input resolution.** That was the first design and it was wrong. Scaling by `imgsz / max(W, H)` makes the bucket boundaries move with the run: an object that is `tiny` at 640 becomes `small` at 1280, so `AP-tiny` from the two runs describes two different sets of objects and cannot be compared. Since **comparing 640 against 1280 is the entire point of running both**, that choice destroyed the measurement it existed to make. A fixed scale keeps the population identical across every row, so the size columns rank models *and* resolutions on the same objects.
 
 COCO's standard `AP-S` / `AP-M` / `AP-L` (native pixels, 32²/96² thresholds) are reported alongside for comparability with other papers, with the caveat that on AFO they degenerate to "almost everything is M or L".
+
+### Operating point — the number AP hides
+
+`mAP` integrates over the whole precision-recall curve. A deployed SAR system runs at **one** confidence threshold, and what decides whether an operator keeps the system switched on is how often it cries wolf at that threshold. AP cannot show this.
+
+Every run therefore also reports `operating_point` in `metrics.json`: the confidence threshold maximising class-agnostic F1 at IoU 0.5, with precision, recall, F1, and **false alarms and misses per image** at that threshold.
+
+Two caveats that keep it honest. The threshold is chosen on the *test* split, so these are upper bounds — a deployed threshold would be picked on val. And matching is class-agnostic, because in maritime SAR finding the object matters more than naming it.
 
 ---
 
@@ -125,6 +140,21 @@ COCO's standard `AP-S` / `AP-M` / `AP-L` (native pixels, 32²/96² thresholds) a
 **NVIDIA GeForce RTX 4090 Laptop GPU, 16 GB VRAM**, driver 617.14.
 
 This is the **laptop** part, not a desktop 4090: **76 SMs against 128**, a lower power envelope, and subject to thermal throttling. Every FPS figure in the leaderboard is labelled with this exact name and with the resolution it was measured at. Runs are performed plugged in, on a performance power profile.
+
+**Driver setting, required before any run:** NVIDIA Control Panel → Manage 3D Settings → **CUDA – Sysmem Fallback Policy → Prefer No Sysmem Fallback**. With the default policy an over-budget allocation silently spills to system RAM and streams over PCIe instead of raising `OutOfMemoryError` (§3). With it off, the failure is loud and immediate, and [`afo/vram.py`](afo/vram.py) becomes a second line of defence rather than the only one.
+
+### FPS is measured in a separate pass, after a cool-down
+
+A laptop GPU that has been training for hours is hot and running at reduced clocks. The same weights measured **43.8 FPS immediately after a 45-minute training run and 76.2 FPS on a cold card** — a 74% spread that says nothing about the model.
+
+Discarding the first pass does not fix this: the second, third and fourth passes are hot too. So:
+
+- FPS is **not** measured by the training scripts. They write `"speed": null` and move on.
+- It is filled in afterwards by `python scripts/benchmark_fps.py --all`, which before each model waits for the GPU to drop below **50 °C** (up to 15 minutes) and then measures.
+- **Temperature, SM clock and power are recorded in `metrics.json` next to the number**, before and after the measurement, so a reader can see the thermal state the figure came from.
+- A spread above 15% across repeats raises a warning in the log: the card was still changing clocks and the figure should be re-taken.
+
+Preconditions for a valid measurement: plugged in, high-performance power profile, no other GPU load.
 
 ### Measured epoch times and run order
 
@@ -176,15 +206,15 @@ Checkpoints are **not** committed. Each best checkpoint is uploaded to Hugging F
 
 - Ranking is by **test mAP50-95**. Differences under ~1 point are within single-seed noise and should not be called a win.
 - `human` dominates the object count, so **mAP is not a summary of SAR usefulness**. Read per-class AP.
-- No column measures false alarms (§1).
+- mAP does penalise false alarms on water (§1) — but it is threshold-free. For the operating-point view, read `operating_point` in `metrics.json`: the F1-optimal threshold and the false alarms per image at it.
 - FPS is from one laptop GPU in one thermal state; use it for relative comparison between rows, not as an absolute capability claim.
 
 ---
 
 ## 8. TODO — explicitly out of scope for this phase
 
-- [ ] **Seed-variance study.** Currently one run per model; the table cannot distinguish a 0.5-point difference from noise.
-- [ ] **A background-only evaluation set**, so false-alarm rate on empty water becomes measurable. The 720 train background images are the obvious source, but using them means deviating from the official split, so this needs its own protocol.
+- [ ] **Seed-variance study across the whole matrix.** Only the top model of each arm gets three seeds; the rest are single-seed, so mid-table gaps under ~1 point remain indistinguishable from noise.
+- [ ] **A background-only evaluation set.** Not because false alarms are unmeasurable without it — they are measured, see §1 and the operating-point diagnostic — but because "false alarms per empty patrol frame" is the figure an operator reasons with, and reporting it directly beats estimating it. The 720 train background images are the obvious source, but using them deviates from the official split, so it needs its own protocol. A good requirement for a future AFO v2: empty frames in the test split.
 - [ ] **A de-duplicated split variant**, quantifying what the 7 cross-split duplicate pairs (one of them val↔test) are worth.
 - [ ] **A one-class arm** on `1category/`, the third label set the dataset ships. Pure "is there anything in the water", the weakest-supervision version of the task.
 - [ ] **Cross-dataset generalisation** to SeaDronesSee and MOBDrone.

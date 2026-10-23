@@ -105,12 +105,15 @@ def build_six_class(rows: list[dict]) -> str:
             )
 
     out.append(
-        "\nSorted by test mAP50-95. Size buckets are measured **at the model's input "
-        "resolution**, so AP-tiny at 640 and at 1280 describe **different populations of "
-        "objects** and must not be compared across sections. One run per model, no "
-        "seed-variance estimate — treat gaps under ~1 point as noise. FPS: batch 1, FP16, "
-        "RTX 4090 **Laptop** GPU, median of repeated passes. No column measures false alarms "
-        "(the test split has no background images) — see [BENCHMARK.md](BENCHMARK.md)."
+        "\nSorted by test mAP50-95. Size buckets use a **fixed reference scale** — every "
+        "image rescaled to a 640 px longest side, independent of the training resolution — "
+        "so AP-tiny means the same population of objects in every row and 640 is directly "
+        "comparable with 1280. One run per model, no seed-variance estimate: treat gaps "
+        "under ~1 point as noise. FPS: batch 1, FP16, RTX 4090 **Laptop** GPU, measured in "
+        "a separate pass after a thermal cool-down with the temperature recorded alongside. "
+        "mAP does penalise false alarms on water; for the operating-point view (F1-optimal "
+        "threshold, false alarms per image) read `operating_point` in each `metrics.json` — "
+        "see [BENCHMARK.md](BENCHMARK.md)."
     )
     return "\n".join(out)
 

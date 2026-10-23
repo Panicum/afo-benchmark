@@ -237,11 +237,12 @@ def main() -> None:
         metrics["two_category"] = evaluate_two_category(gt, pred_path, imgsz=args.imgsz)
 
     # --- FPS -----------------------------------------------------------------
-    print("\npomiar FPS...")
-    from afo.fps import measure_fps
-
-    fps = measure_fps(str(best), args.imgsz)
-    metrics["speed"] = fps
+    # NIE mierzymy tutaj: GPU jest po treningu gorace i obniza zegary, wiec
+    # liczba opisywalaby stan cieplny maszyny, a nie model (zmierzone: 43,8 FPS
+    # tuz po treningu wobec 76,2 na zimnej karcie). Uzupelnia to osobny przebieg
+    # `scripts/benchmark_fps.py --all` po zakonczeniu calej kolejki.
+    metrics["speed"] = None
+    print("\n[fps] pominiete — uruchom `scripts/benchmark_fps.py --all` po kolejce")
 
     # model.info() zwraca None w ultralytics 8.4 — liczymy sami, zeby kolumna
     # "params" w leaderboardzie nie byla pusta.

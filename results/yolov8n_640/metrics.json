@@ -1,6 +1,6 @@
 {
   "gt_json": "C:\\Users\\Jan\\.cache\\afo\\coco\\test.json",
-  "dt_json": "C:\\Users\\Jan\\Projects\\afoDataset\\results\\yolov8n_640\\predictions_test.json",
+  "dt_json": "results\\yolov8n_640\\predictions_test.json",
   "imgsz": 640,
   "n_images": 514,
   "n_gt_objects": 7639,
@@ -74,11 +74,28 @@
       "n_gt": 0
     }
   },
-  "afo_buckets_note": "Pola mierzone po przeskalowaniu do imgsz=640; kubelkow NIE wolno porownywac miedzy roznymi imgsz (inna populacja obiektow).",
+  "afo_buckets_reference_side": 640,
+  "afo_buckets_note": "Pola mierzone po przeskalowaniu kazdego obrazu do dluzszego boku 640 px. Skala jest stala i niezalezna od imgsz, wiec kubelki opisuja te sama populacje obiektow we wszystkich biegach i SA porownywalne miedzy 640 a 1280.",
+  "operating_point": {
+    "threshold": 0.42,
+    "precision": 0.7123723422065964,
+    "recall": 0.5570100798533839,
+    "f1": 0.625183661475169,
+    "tp": 4255,
+    "fp": 1718,
+    "fn": 3384,
+    "fp_per_image": 3.342412451361868,
+    "fn_per_image": 6.583657587548638,
+    "n_images": 514,
+    "n_gt_objects": 7639,
+    "iou_threshold": 0.5,
+    "class_agnostic": true,
+    "note": "Prog maksymalizujacy F1 na zbiorze TESTOWYM \u2014 to gorna granica tego, co da sie osiagnac, bo prog dobrany na tych samych danych, na ktorych jest mierzony. Do wdrozenia prog dobiera sie na walidacji."
+  },
   "categories": "6categories",
   "two_category": {
-    "gt_json": "C:\\Users\\Jan\\AppData\\Local\\Temp\\tmpklamdggy\\gt_2cat.json",
-    "dt_json": "C:\\Users\\Jan\\AppData\\Local\\Temp\\tmpklamdggy\\dt_2cat.json",
+    "gt_json": "C:\\Users\\Jan\\AppData\\Local\\Temp\\tmp6vbcyjfh\\gt_2cat.json",
+    "dt_json": "C:\\Users\\Jan\\AppData\\Local\\Temp\\tmp6vbcyjfh\\dt_2cat.json",
     "imgsz": 640,
     "n_images": 514,
     "n_gt_objects": 7639,
@@ -128,7 +145,24 @@
         "n_gt": 0
       }
     },
-    "afo_buckets_note": "Pola mierzone po przeskalowaniu do imgsz=640; kubelkow NIE wolno porownywac miedzy roznymi imgsz (inna populacja obiektow).",
+    "afo_buckets_reference_side": 640,
+    "afo_buckets_note": "Pola mierzone po przeskalowaniu kazdego obrazu do dluzszego boku 640 px. Skala jest stala i niezalezna od imgsz, wiec kubelki opisuja te sama populacje obiektow we wszystkich biegach i SA porownywalne miedzy 640 a 1280.",
+    "operating_point": {
+      "threshold": 0.42,
+      "precision": 0.7123723422065964,
+      "recall": 0.5570100798533839,
+      "f1": 0.625183661475169,
+      "tp": 4255,
+      "fp": 1718,
+      "fn": 3384,
+      "fp_per_image": 3.342412451361868,
+      "fn_per_image": 6.583657587548638,
+      "n_images": 514,
+      "n_gt_objects": 7639,
+      "iou_threshold": 0.5,
+      "class_agnostic": true,
+      "note": "Prog maksymalizujacy F1 na zbiorze TESTOWYM \u2014 to gorna granica tego, co da sie osiagnac, bo prog dobrany na tych samych danych, na ktorych jest mierzony. Do wdrozenia prog dobiera sie na walidacji."
+    },
     "categories": "2 (small_obj = human+bouy; large_obj = board/boat/sailboat/kayak)",
     "caveat": "Model uczony na 6 klasach, predykcje scalone po fakcie \u2014 nie to samo, co trening na wersji dwuklasowej."
   },
@@ -170,10 +204,10 @@
     "warmup_run_discarded_fps": 67.24,
     "fps_spread_pct": 16.2
   },
-  "model": "yolov8n",
-  "framework": "ultralytics",
   "params_M": 3.14,
   "gflops": 8.8,
+  "model": "yolov8n",
+  "framework": "ultralytics",
   "train": {
     "epochs_budget": 100,
     "patience": 20,

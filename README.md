@@ -87,7 +87,11 @@ The split is far more even **by object** (67.4 / 13.5 / 19.1) than **by image** 
 | val | 8 | 2.4% |
 | test | **0** | **0.0%** |
 
-A quarter of the training set is background and the test set contains none. Two consequences, both of which the benchmark has to state rather than hide: training sees substantial negative supervision for free, and **the test split cannot measure false alarms on empty water** — a detector that fires constantly on wave crests is not penalised by any number on the leaderboard. For maritime SAR that is the error that costs most. A background-only evaluation set is listed as future work in [BENCHMARK.md](BENCHMARK.md).
+A quarter of the training set is background and the test set contains none. Training therefore sees substantial negative supervision for free.
+
+**This does not mean false alarms go unmeasured.** This is detection, not classification: a detection that matches no ground-truth box lowers precision whether or not the frame contains other objects, and with a median object covering 0.085% of the frame, essentially all of the test set *is* open water. mAP penalises a detector that fires on wave crests exactly as it should.
+
+What the missing background frames do cost is narrower: the operational figure "false alarms per patrol frame on a frame with nothing in it" is not measured directly. It is, however, estimable from the annotated frames, and the benchmark reports it — see the operating-point diagnostic below.
 
 Object counts per image run from 0 to 94; 304 images hold 40 or more.
 
@@ -112,7 +116,7 @@ AFO objects are small **relative to the frame**, not small in absolute pixels. T
 
 Measured in native pixels, 98.7% of objects fall in medium+large and the `tiny` bucket holds **15 objects in the entire dataset** — all of them in test. An AP-tiny column computed that way is noise, not a measurement.
 
-Measured at the resolution the detector actually sees, the same buckets separate the data: feeding a 2560×1440 image to a 640 network shrinks every object ~4×, which is why 62% of objects are sub-16 px at the input and why 1280 is expected to matter. [BENCHMARK.md](BENCHMARK.md) states which convention the leaderboard uses.
+The benchmark therefore buckets objects at a **fixed reference scale** — every image rescaled to a 640 px longest side — which is why 62% of objects land in `tiny`. The scale is deliberately *not* the model's own input resolution: if it were, an object would be `tiny` at 640 and `small` at 1280, and the two runs could not be compared — which would defeat the purpose of running both. See [BENCHMARK.md](BENCHMARK.md) §4.
 
 Object size per class (native px, median √area): `bouy` **35.9** · `human` **77.2** · `kayak` **102.0** · `boat` **125.5** · `wind/sup-board` **175.4** · `sailboat` **238.8**. The two smallest classes are also the two that the benchmark finds hardest — and `human` alone is 83% of all objects, so the dataset's difficulty and its imbalance point the same way. Full breakdown in [notebooks/01_explore.ipynb](notebooks/01_explore.ipynb).
 
@@ -167,8 +171,22 @@ AFO ships two label sets, and they are **two different tasks**. This repository 
 | `yolo11n` | 0.4716 | **0.2417** | 0.2222 | 0.2721 | 2.61 | 63.2 | [HF](https://huggingface.co/jgasienica/afo-yolo11n-640) |
 | `yolov8n` | 0.4928 | **0.2401** | 0.2383 | 0.2560 | 3.14 | 66.7 | [HF](https://huggingface.co/jgasienica/afo-yolov8n-640) |
 
-Sorted by test mAP50-95. Size buckets are measured **at the model's input resolution**, so AP-tiny at 640 and at 1280 describe **different populations of objects** and must not be compared across sections. One run per model, no seed-variance estimate — treat gaps under ~1 point as noise. FPS: batch 1, FP16, RTX 4090 **Laptop** GPU, median of repeated passes. No column measures false alarms (the test split has no background images) — see [BENCHMARK.md](BENCHMARK.md).
+Sorted by test mAP50-95. Size buckets use a **fixed reference scale** — every image rescaled to a 640 px longest side, independent of the training resolution — so AP-tiny means the same population of objects in every row and 640 is directly comparable with 1280. One run per model, no seed-variance estimate: treat gaps under ~1 point as noise. FPS: batch 1, FP16, RTX 4090 **Laptop** GPU, measured in a separate pass after a thermal cool-down with the temperature recorded alongside. mAP does penalise false alarms on water; for the operating-point view (F1-optimal threshold, false alarms per image) read `operating_point` in each `metrics.json` — see [BENCHMARK.md](BENCHMARK.md).
 <!-- leaderboard:end -->
+
+#### Operating point — what AP does not show
+
+`mAP` integrates the whole precision-recall curve. A deployed system runs at **one** threshold, and there the question is how often it cries wolf. Every run records this in `metrics.json` under `operating_point`: the threshold maximising class-agnostic F1 at IoU 0.5, and the error counts at it.
+
+| model | threshold | precision | recall | F1 | **false alarms / image** |
+|---|---|---|---|---|---|
+| `yolo11n` | 0.41 | 0.737 | 0.592 | 0.657 | **3.14** |
+| `yolov8n` | 0.42 | 0.712 | 0.557 | 0.625 | **3.34** |
+| `yolov8s` | 0.46 | 0.679 | 0.554 | 0.610 | **3.89** |
+
+Read against the leaderboard, this inverts the ranking. `yolov8s` wins on mAP50-95 by 2.1 points, and at its own best operating point it produces **the most false alarms of the three** — it trades precision for the extra recall that lifts AP. For a benchmark that is fine; for an operator watching a screen it is the opposite of fine. Neither view is wrong, and that is exactly why both are reported.
+
+Two caveats: the threshold is picked on the test split, so these are optimistic upper bounds (a deployed threshold would be chosen on val), and matching ignores class, because in SAR finding the object beats naming it.
 
 ### 2. Two classes — continuing the published line
 
