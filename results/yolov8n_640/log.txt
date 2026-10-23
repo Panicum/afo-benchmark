@@ -1,0 +1,279 @@
+=== yolov8n_640 ===
+GPU: NVIDIA GeForce RTX 4090 Laptop GPU
+sysmem fallback sterownika: True (batch MUSI byc ograniczany pomiarem)
+dane: C:\Users\Jan\.cache\afo\yolo1280\afo.yaml
+
+sonda batcha:
+
+
+
+
+
+
+  batch    8: OK: peak 1.1 GB / limit 14.6 GB (z 17.2 GB fizycznych)
+
+
+
+
+
+  batch   16: OK: peak 2.1 GB / limit 14.6 GB (z 17.2 GB fizycznych)
+
+
+
+
+
+  batch   32: OK: peak 4.0 GB / limit 14.6 GB (z 17.2 GB fizycznych)
+
+
+
+
+
+  batch   64: OK: peak 7.4 GB / limit 14.6 GB (z 17.2 GB fizycznych)
+wybrany batch: 64 (peak 7.4 GB)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+trening: 0.60 h | OK: peak 8.9 GB / limit 14.6 GB (z 17.2 GB fizycznych)
+
+predykcje na tescie...
+[predict] ramki przeskalowane do ukladu GT dla 514/514 obrazow (predykcja na przeskalowanych kopiach)
+[predict] 36360 detekcji na 514/514 obrazach -> C:\Users\Jan\Projects\afoDataset\results\yolov8n_640\predictions_test.json
+
+=== AFO test — predictions_test.json (imgsz=640) ===
+obrazow 514, obiektow GT 7639, detekcji 36360
+
+mAP50-95 0.2401   mAP50 0.4928   (maxDets=300; przy 100: 0.2399)
+
+AP na klase (AP50-95 / AP50, n obiektow GT):
+  human            0.1520  0.5102   n= 6511
+  wind/sup-board   0.4824  0.9246   n=  634
+  boat             0.2035  0.3757   n=  143
+  bouy             0.0217  0.0786   n=   59
+  sailboat         0.0938  0.1414   n=   28
+  kayak            0.4871  0.9261   n=  264
+
+Kubelki AFO (w pikselach wejscia, imgsz=640):
+  tiny     AP50-95 0.2383   n= 4424
+  small    AP50-95 0.2560   n= 2930
+  medium   AP50-95 0.3371   n=  285
+  large    AP50-95    —     n=    0
+  UWAGA: nieporownywalne miedzy roznymi imgsz.
+
+Standardowe COCO (piksele oryginalu, dla porownania z innymi pracami):
+  AP-S  0.0043
+  AP-M  0.1796
+  AP-L  0.3071
+
+=== Wersja DWUKLASOWA (definicja klas jak w Tabeli 2 pracy) ===
+AP (50-95) 0.3182   AP@50 0.7162
+  small_obj  AP50-95 0.1509  AP@50 0.5061  n=6570
+  large_obj  AP50-95 0.4856  AP@50 0.9263  n=1069
+  Model uczony na 6 klasach, predykcje scalone po fakcie — nie to samo, co trening na wersji dwuklasowej.
+
+pomiar FPS...
+[fps] mediana 66.72 FPS end-to-end (zakres 58.09–68.87, rozrzut 16%, 3 przebiegi, odrzucony przebieg na zimno 67.24)
+[fps] UWAGA: rozrzut powyzej 15% — GPU prawdopodobnie zmienia stan cieplny. Powtorz pomiar na ustabilizowanej maszynie.
+
+Zapisano C:\Users\Jan\Projects\afoDataset\results\yolov8n_640

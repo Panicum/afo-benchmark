@@ -163,7 +163,9 @@ AFO ships two label sets, and they are **two different tasks**. This repository 
 
 | model | mAP50 | mAP50-95 | AP-tiny (n=4424) | AP-small (n=2930) | params (M) | FPS | weights |
 |---|---|---|---|---|---|---|---|
+| `yolov8s` | 0.5231 | **0.2630** | 0.2592 | 0.2848 | 11.14 | 70.0 | [HF](https://huggingface.co/jgasienica/afo-yolov8s-640) |
 | `yolo11n` | 0.4716 | **0.2417** | 0.2222 | 0.2721 | 2.61 | 63.2 | [HF](https://huggingface.co/jgasienica/afo-yolo11n-640) |
+| `yolov8n` | 0.4928 | **0.2401** | 0.2383 | 0.2560 | 3.14 | 66.7 | [HF](https://huggingface.co/jgasienica/afo-yolov8n-640) |
 
 Sorted by test mAP50-95. Size buckets are measured **at the model's input resolution**, so AP-tiny at 640 and at 1280 describe **different populations of objects** and must not be compared across sections. One run per model, no seed-variance estimate — treat gaps under ~1 point as noise. FPS: batch 1, FP16, RTX 4090 **Laptop** GPU, median of repeated passes. No column measures false alarms (the test split has no background images) — see [BENCHMARK.md](BENCHMARK.md).
 <!-- leaderboard:end -->

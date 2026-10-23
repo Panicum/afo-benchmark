@@ -92,6 +92,32 @@ def measure_fps(
     return out
 
 
+def time_predict_fn(
+    predict_fn,
+    files: list[Path],
+    warmup: int = WARMUP_IMAGES,
+) -> dict[str, float]:
+    """Mierzy czas dowolnej funkcji predykcji na liscie plikow.
+
+    Uzywane przez modele spoza Ultralytics (RF-DETR). Synchronizacja CUDA po
+    kazdym wywolaniu, inaczej mierzy sie kolejkowanie zamiast liczenia.
+    """
+    import torch
+
+    for p in files[:warmup]:
+        predict_fn(str(p))
+    torch.cuda.synchronize()
+
+    total = []
+    for p in files[warmup:]:
+        t0 = time.perf_counter()
+        predict_fn(str(p))
+        torch.cuda.synchronize()
+        total.append(time.perf_counter() - t0)
+    return {**_percentiles(total), "fps": round(1.0 / statistics.fmean(total), 2),
+            "timed_images": len(total)}
+
+
 def _measure_once(
     weights: str,
     imgsz: int,
