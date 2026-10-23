@@ -207,7 +207,9 @@ Checkpoints are **not** committed. Each best checkpoint is uploaded to Hugging F
 - Ranking is by **test mAP50-95**. Differences under ~1 point are within single-seed noise and should not be called a win.
 - `human` dominates the object count, so **mAP is not a summary of SAR usefulness**. Read per-class AP.
 - mAP does penalise false alarms on water (§1) — but it is threshold-free. For the operating-point view, read `operating_point` in `metrics.json`: the F1-optimal threshold and the false alarms per image at it.
-- FPS is from one laptop GPU in one thermal state; use it for relative comparison between rows, not as an absolute capability claim.
+- FPS is from one laptop GPU; use it for relative comparison between rows, not as an absolute capability claim. Each row records the temperature and SM clock it was measured at.
+- **At batch 1 the small models are overhead-bound, not compute-bound.** Preprocessing, the Python call and NMS dominate, so `n` and `s` can land within a few FPS of each other despite a 3.5× difference in parameters. That is a property of *this* measurement — batch 1, this GPU, this framework — and not a general claim that the bigger model is free. At larger batch, or on a device where compute dominates, the gap reappears. Read the FPS column as "what this laptop does, one frame at a time", which is the SAR case, and nothing wider.
+- **A better model on mAP can be the worse model at an operating point.** `yolov8s` leads mAP50-95 and emits the most false alarms per image of the three measured so far. Decide which of the two questions you are asking before quoting a winner.
 
 ---
 
