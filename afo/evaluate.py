@@ -94,6 +94,7 @@ def operating_point(
     dets: list[dict],
     iou_thr: float = 0.5,
     n_steps: int = 99,
+    return_curve: bool = False,
 ) -> dict[str, Any]:
     """Prog ufnosci maksymalizujacy F1 i liczba falszywych alarmow na obraz.
 
@@ -150,8 +151,11 @@ def operating_point(
             else:
                 scored.append((score, False))
 
-    best = {"f1": -1.0}
-    for k in range(1, n_steps + 1):
+    # Pelna krzywa. Prog 0 wlaczony celowo: bez niego nie widac SUFITU RECALLU,
+    # czyli ilu obiektow model nie znajduje przy ZADNEJ ufnosci. Dla SAR to
+    # wazniejsza liczba niz ktorykolwiek punkt pracy.
+    curve = []
+    for k in range(0, n_steps + 1):
         thr = k / (n_steps + 1)
         tp = sum(1 for s, ok in scored if s >= thr and ok)
         fp = sum(1 for s, ok in scored if s >= thr and not ok)
@@ -159,22 +163,60 @@ def operating_point(
         prec = tp / (tp + fp) if tp + fp else 0.0
         rec = tp / n_gt
         f1 = 2 * prec * rec / (prec + rec) if prec + rec else 0.0
-        if f1 > best["f1"]:
-            best = {
-                "threshold": round(thr, 3), "precision": prec, "recall": rec, "f1": f1,
-                "tp": tp, "fp": fp, "fn": fn,
-                "fp_per_image": fp / n_images, "fn_per_image": fn / n_images,
+        curve.append({
+            "threshold": round(thr, 3), "precision": prec, "recall": rec, "f1": f1,
+            "tp": tp, "fp": fp, "fn": fn,
+            "fp_per_image": fp / n_images, "fn_per_image": fn / n_images,
+        })
+
+    out: dict[str, Any] = dict(max(curve, key=lambda d: d["f1"]))
+    out["n_images"] = n_images
+    out["n_gt_objects"] = n_gt
+    out["iou_threshold"] = iou_thr
+    out["class_agnostic"] = True
+
+    # Punkty przy ZADANYM RECALLU. F1 wazy przeoczenie i falszywy alarm rowno,
+    # a w SAR przeoczony czlowiek w wodzie kosztuje wiecej niz jeden falszywy
+    # alarm. Operator pyta "ile bede mial fatygi przy czulosci 80/90%", i to
+    # jest pytanie, na ktore ta tabela odpowiada.
+    at_recall: dict[str, Any] = {}
+    for target in (0.8, 0.9):
+        feasible = [c for c in curve if c["recall"] >= target]
+        if feasible:
+            # najwyzsza precyzja sposrod progow osiagajacych zadany recall
+            at_recall[f"r{int(target * 100)}"] = max(feasible, key=lambda d: d["precision"])
+        else:
+            at_recall[f"r{int(target * 100)}"] = {
+                "reachable": False,
+                "max_recall": max(c["recall"] for c in curve),
+                "note": f"model nie osiaga recallu {target} przy zadnym progu",
             }
-    best["n_images"] = n_images
-    best["n_gt_objects"] = n_gt
-    best["iou_threshold"] = iou_thr
-    best["class_agnostic"] = True
-    best["note"] = (
-        "Prog maksymalizujacy F1 na zbiorze TESTOWYM — to gorna granica tego, co "
-        "da sie osiagnac, bo prog dobrany na tych samych danych, na ktorych jest "
-        "mierzony. Do wdrozenia prog dobiera sie na walidacji."
+    out["at_recall"] = at_recall
+
+    ceiling = max(curve, key=lambda d: d["recall"])
+    out["recall_ceiling"] = {
+        "recall": ceiling["recall"],
+        "threshold": ceiling["threshold"],
+        "missed_objects": ceiling["fn"],
+        "note": (
+            "Najwyzszy osiagalny recall, przy progu zbiegajacym do zera. Obiekty "
+            "ponad ten sufit nie sa znajdowane przy ZADNEJ ufnosci — zadne "
+            "strojenie progu ich nie odzyska."
+        ),
+    }
+
+    out["note"] = (
+        "Progi dobrane na zbiorze TESTOWYM — to gorne ograniczenia, bo wybrane na "
+        "tych samych danych, na ktorych mierzone. Do wdrozenia prog dobiera sie na "
+        "walidacji. Dopasowanie BEZ rozroznienia klas, wiec ta diagnostyka wazy "
+        "obiektami, podczas gdy mAP wazy klasami — przy 85% udziale klasy human "
+        "obie moga dac inna kolejnosc modeli i obie sa poprawne."
     )
-    return best
+    if return_curve:
+        # Pelna krzywa nie trafia do metrics.json (100 punktow na bieg to szum
+        # w pliku, ktory ma byc czytelny) — tylko na zadanie, dla wykresow.
+        out["curve"] = curve
+    return out
 
 
 def evaluate(
@@ -353,6 +395,13 @@ def print_report(r: dict[str, Any]) -> None:
               f"F1 {op['f1']:.4f}")
         print(f"  falszywych alarmow na obraz: {op['fp_per_image']:.2f}   "
               f"przeoczen na obraz: {op['fn_per_image']:.2f}")
+        for key, label in (("r80", "recall 80%"), ("r90", "recall 90%")):
+            d = (op.get("at_recall") or {}).get(key, {})
+            if d.get("reachable") is False:
+                print(f"  przy {label}: NIEOSIAGALNE (max recall {d['max_recall']:.3f})")
+            elif d:
+                print(f"  przy {label}: prog {d['threshold']:.2f}, precyzja "
+                      f"{d['precision']:.3f}, FP na obraz {d['fp_per_image']:.2f}")
 
 
 #: Wersja dwuklasowa z pracy (sekcja 3.1): human+buoy -> small_obj,

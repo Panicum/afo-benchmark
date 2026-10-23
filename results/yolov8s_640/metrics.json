@@ -90,12 +90,30 @@
     "n_gt_objects": 7639,
     "iou_threshold": 0.5,
     "class_agnostic": true,
-    "note": "Prog maksymalizujacy F1 na zbiorze TESTOWYM \u2014 to gorna granica tego, co da sie osiagnac, bo prog dobrany na tych samych danych, na ktorych jest mierzony. Do wdrozenia prog dobiera sie na walidacji."
+    "at_recall": {
+      "r80": {
+        "reachable": false,
+        "max_recall": 0.725749443644456,
+        "note": "model nie osiaga recallu 0.8 przy zadnym progu"
+      },
+      "r90": {
+        "reachable": false,
+        "max_recall": 0.725749443644456,
+        "note": "model nie osiaga recallu 0.9 przy zadnym progu"
+      }
+    },
+    "recall_ceiling": {
+      "recall": 0.725749443644456,
+      "threshold": 0.0,
+      "missed_objects": 2095,
+      "note": "Najwyzszy osiagalny recall, przy progu zbiegajacym do zera. Obiekty ponad ten sufit nie sa znajdowane przy ZADNEJ ufnosci \u2014 zadne strojenie progu ich nie odzyska."
+    },
+    "note": "Progi dobrane na zbiorze TESTOWYM \u2014 to gorne ograniczenia, bo wybrane na tych samych danych, na ktorych mierzone. Do wdrozenia prog dobiera sie na walidacji. Dopasowanie BEZ rozroznienia klas, wiec ta diagnostyka wazy obiektami, podczas gdy mAP wazy klasami \u2014 przy 85% udziale klasy human obie moga dac inna kolejnosc modeli i obie sa poprawne."
   },
   "categories": "6categories",
   "two_category": {
-    "gt_json": "C:\\Users\\Jan\\AppData\\Local\\Temp\\tmpq9ke8cx_\\gt_2cat.json",
-    "dt_json": "C:\\Users\\Jan\\AppData\\Local\\Temp\\tmpq9ke8cx_\\dt_2cat.json",
+    "gt_json": "C:\\Users\\Jan\\AppData\\Local\\Temp\\tmp1t0a3t9n\\gt_2cat.json",
+    "dt_json": "C:\\Users\\Jan\\AppData\\Local\\Temp\\tmp1t0a3t9n\\dt_2cat.json",
     "imgsz": 640,
     "n_images": 514,
     "n_gt_objects": 7639,
@@ -161,7 +179,25 @@
       "n_gt_objects": 7639,
       "iou_threshold": 0.5,
       "class_agnostic": true,
-      "note": "Prog maksymalizujacy F1 na zbiorze TESTOWYM \u2014 to gorna granica tego, co da sie osiagnac, bo prog dobrany na tych samych danych, na ktorych jest mierzony. Do wdrozenia prog dobiera sie na walidacji."
+      "at_recall": {
+        "r80": {
+          "reachable": false,
+          "max_recall": 0.725749443644456,
+          "note": "model nie osiaga recallu 0.8 przy zadnym progu"
+        },
+        "r90": {
+          "reachable": false,
+          "max_recall": 0.725749443644456,
+          "note": "model nie osiaga recallu 0.9 przy zadnym progu"
+        }
+      },
+      "recall_ceiling": {
+        "recall": 0.725749443644456,
+        "threshold": 0.0,
+        "missed_objects": 2095,
+        "note": "Najwyzszy osiagalny recall, przy progu zbiegajacym do zera. Obiekty ponad ten sufit nie sa znajdowane przy ZADNEJ ufnosci \u2014 zadne strojenie progu ich nie odzyska."
+      },
+      "note": "Progi dobrane na zbiorze TESTOWYM \u2014 to gorne ograniczenia, bo wybrane na tych samych danych, na ktorych mierzone. Do wdrozenia prog dobiera sie na walidacji. Dopasowanie BEZ rozroznienia klas, wiec ta diagnostyka wazy obiektami, podczas gdy mAP wazy klasami \u2014 przy 85% udziale klasy human obie moga dac inna kolejnosc modeli i obie sa poprawne."
     },
     "categories": "2 (small_obj = human+bouy; large_obj = board/boat/sailboat/kayak)",
     "caveat": "Model uczony na 6 klasach, predykcje scalone po fakcie \u2014 nie to samo, co trening na wersji dwuklasowej."

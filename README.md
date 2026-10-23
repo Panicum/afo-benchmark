@@ -176,17 +176,25 @@ Sorted by test mAP50-95. Size buckets use a **fixed reference scale** — every 
 
 #### Operating point — what AP does not show
 
-`mAP` integrates the whole precision-recall curve. A deployed system runs at **one** threshold, and there the question is how often it cries wolf. Every run records this in `metrics.json` under `operating_point`: the threshold maximising class-agnostic F1 at IoU 0.5, and the error counts at it.
+`mAP` integrates the whole precision-recall curve and averages over classes. A deployed system runs at **one** threshold and cares about objects, not class balance. `metrics.json` records both views under `operating_point` (class-agnostic, IoU 0.5).
 
-| model | threshold | precision | recall | F1 | **false alarms / image** |
-|---|---|---|---|---|---|
-| `yolo11n` | 0.41 | 0.737 | 0.592 | 0.657 | **3.14** |
-| `yolov8n` | 0.42 | 0.712 | 0.557 | 0.625 | **3.34** |
-| `yolov8s` | 0.46 | 0.679 | 0.554 | 0.610 | **3.89** |
+![Two charts: precision-recall curves for three models crossing near recall 0.37, and false alarms per image rising with recall on a log scale](docs/figures/pr-curves.png)
 
-Read against the leaderboard, this inverts the ranking. `yolov8s` wins on mAP50-95 by 2.1 points, and at its own best operating point it produces **the most false alarms of the three** — it trades precision for the extra recall that lifts AP. For a benchmark that is fine; for an operator watching a screen it is the opposite of fine. Neither view is wrong, and that is exactly why both are reported.
+| model | mAP50 ↑ | AP50 weighted by object count | best-F1 precision | recall | **recall ceiling** | **objects never found** |
+|---|---|---|---|---|---|---|
+| `yolov8s` | **0.5231** | 0.5245 | 0.679 | 0.554 | 0.726 | **2,095** |
+| `yolov8n` | 0.4928 | 0.5518 | 0.712 | 0.557 | 0.748 | 1,922 |
+| `yolo11n` | 0.4716 | **0.5731** | **0.737** | **0.592** | **0.773** | **1,736** |
 
-Two caveats: the threshold is picked on the test split, so these are optimistic upper bounds (a deployed threshold would be chosen on val), and matching ignores class, because in SAR finding the object beats naming it.
+**The two columns rank the models in opposite orders, and both are correct.** mAP averages the six classes with equal weight, so `yolov8s`'s large wins on the rare classes — `boat` 0.594 against 0.377, `kayak` 0.967 against 0.820, `bouy` 0.113 against 0.051 — outweigh its loss on `human`, which is 85% of all test objects (0.473 against 0.538). Weight by object instead of by class and the order reverses exactly.
+
+The PR curves cross at **recall ≈ 0.37**. Below that the v8 models are marginally ahead; across the entire useful region above it, `yolo11n` dominates on precision and reaches the highest recall.
+
+**The ceiling is the number that should worry a SAR reader.** No model exceeds **77% recall at any confidence** — 1,736 to 2,095 of the 7,639 test objects are never detected, and no threshold tuning recovers them. Neither 80% nor 90% recall is reachable by any of the three, so the "false alarms at 80% sensitivity" question has no answer yet on this dataset.
+
+So: `yolov8s` is better at *telling apart* the rare things it finds, and worse at *finding things at all*. Which model is "best" depends on the question, which is why both columns are published.
+
+Caveats: thresholds are picked on the test split, so these are optimistic upper bounds (deployment would pick on val); matching ignores class, because in SAR finding the object beats naming it; and these are **single-seed runs** — the gaps between the two `n` models are small enough that the ordering between them should not be treated as settled.
 
 ### 2. Two classes — continuing the published line
 

@@ -44,7 +44,7 @@ Labels are normalised, so they are unchanged. Both benchmark resolutions (640 an
 
 ### What the test split cannot measure
 
-The test split contains **zero background images** (train has 720, val 8). It is tempting to conclude that false alarms on water therefore go unmeasured. **That conclusion is wrong**, and it was in an earlier draft of this file.
+The test split contains **zero background images** (train has 720, val 8). It is tempting to conclude that false alarms on water therefore go unmeasured. That conclusion is wrong.
 
 This is detection, not classification. Every detection that matches no ground-truth box counts as a false positive and lowers precision, regardless of whether the frame contains other objects. The median AFO object covers 0.085% of its frame, so the test split is overwhelmingly open water by area — there is no shortage of water on which a detector can be caught firing. mAP penalises wave-crest detections correctly.
 
@@ -131,7 +131,12 @@ COCO's standard `AP-S` / `AP-M` / `AP-L` (native pixels, 32²/96² thresholds) a
 
 Every run therefore also reports `operating_point` in `metrics.json`: the confidence threshold maximising class-agnostic F1 at IoU 0.5, with precision, recall, F1, and **false alarms and misses per image** at that threshold.
 
-Two caveats that keep it honest. The threshold is chosen on the *test* split, so these are upper bounds — a deployed threshold would be picked on val. And matching is class-agnostic, because in maritime SAR finding the object matters more than naming it.
+Reported alongside the F1-optimal point:
+
+- **False alarms per image at 80% and 90% recall.** F1 weights a miss and a false alarm equally; a missed person in the water does not cost the same as one spurious box, so the operator's question is "what does this cost me at the sensitivity I need". On the models measured so far neither target is reachable at all, which is itself the answer.
+- **The recall ceiling** — the highest recall attainable as the threshold goes to zero. Objects above it are never detected at any confidence and no threshold tuning recovers them. On AFO at 640 this sits at **73–77%**, so between 1,700 and 2,100 of the 7,639 test objects are simply not found.
+
+Two caveats that keep it honest. The thresholds are chosen on the *test* split, so these are upper bounds — a deployed threshold would be picked on val. And matching is class-agnostic, which means this diagnostic weights **objects** while mAP weights **classes**; with `human` at 85% of test objects the two can rank models differently, and both rankings are correct answers to different questions.
 
 ---
 

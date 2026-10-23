@@ -299,11 +299,94 @@ def fig_density(ds: dict[str, AFODataset], out: Path) -> Path:
     return out
 
 
+
+
+# --- figura 5: krzywe precision-recall --------------------------------------
+
+def fig_pr_curves(out: Path, results_dir: Path, categories: str = "6categories") -> Path | None:
+    """Krzywe PR przy IoU 0,5, bez rozroznienia klas.
+
+    Rozstrzyga to, czego sama tabela AP nie rozstrzyga: czy model wygrywajacy
+    mAP jest lepszy wszedzie, czy tylko w jakims fragmencie krzywej. Na AFO
+    odpowiedz jest nieoczywista, bo mAP usrednia po klasach z rowna waga, a ta
+    krzywa wazy obiektami — przy 85% udziale klasy "human" to dwa rozne pytania.
+    """
+    import json
+
+    from afo.download import dataset_root
+    from afo.evaluate import operating_point
+
+    gt_path = dataset_root() / ("coco2cat" if categories == "2categories" else "coco") / "test.json"
+    gt_doc = json.loads(gt_path.read_text(encoding="utf-8"))
+
+    series = []
+    for p in sorted(Path(results_dir).glob("*/metrics.json")):
+        m = json.loads(p.read_text(encoding="utf-8"))
+        if m.get("categories", "6categories") != categories or m.get("imgsz") != 640:
+            continue
+        pred = p.parent / "predictions_test.json"
+        if not pred.is_file():
+            continue
+        op = operating_point(
+            gt_doc, json.loads(pred.read_text(encoding="utf-8")), return_curve=True
+        )
+        series.append((m["model"], op, m.get("mAP50")))
+    if len(series) < 2:
+        print("  (pomijam krzywe PR — mniej niz dwa biegi 6-klasowe @640)")
+        return None
+    series.sort(key=lambda t: -(t[2] or 0))
+
+    fig, axes = plt.subplots(1, 2, figsize=(13, 4.4))
+
+    ax = axes[0]
+    for i, (name, op, ap50) in enumerate(series):
+        c = op["curve"]
+        ax.plot([d["recall"] for d in c], [d["precision"] for d in c],
+                color=SERIES[i], lw=2, label=f"{name}  (mAP50 {ap50:.3f})")
+        best = max(c, key=lambda d: d["f1"])
+        ax.plot(best["recall"], best["precision"], "o", color=SERIES[i],
+                ms=7, mec=SURFACE, mew=2, zorder=5)
+    ax.set_xlabel("recall")
+    ax.set_ylabel("precision")
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.set_title("Precision-recall, IoU 0.5, class-agnostic", fontsize=11, loc="left", pad=8)
+    ax.legend(frameon=False, fontsize=9, loc="lower left")
+    _clean(ax, grid_axis="both")
+
+    ax = axes[1]
+    for i, (name, op, _) in enumerate(series):
+        c = op["curve"]
+        ax.plot([d["recall"] for d in c], [d["fp_per_image"] for d in c],
+                color=SERIES[i], lw=2, label=name)
+    ax.set_xlabel("recall")
+    ax.set_ylabel("false alarms per image")
+    ax.set_xlim(0, 1)
+    ax.set_yscale("log")
+    ax.set_title("What sensitivity costs in false alarms", fontsize=11, loc="left", pad=8)
+    ax.legend(frameon=False, fontsize=9, loc="upper left")
+    _clean(ax, grid_axis="both")
+
+    ceil = max(s[1]["recall_ceiling"]["recall"] for s in series)
+    fig.text(
+        0.5, -0.06,
+        f"Dots mark each model's best-F1 point. No model exceeds {ceil:.0%} recall at any "
+        f"confidence — the rest is never detected, and no threshold recovers it.",
+        ha="center", fontsize=9.5, color=MUTED,
+    )
+    fig.tight_layout()
+    fig.savefig(out, dpi=130, bbox_inches="tight")
+    plt.close(fig)
+    print(f"  {out}")
+    return out
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--out-dir", default="docs/figures")
     ap.add_argument("--root", default=None)
     ap.add_argument("--skip-samples", action="store_true", help="pomin (wolne, czyta obrazy)")
+    ap.add_argument("--results-dir", default="results")
     args = ap.parse_args()
 
     out = Path(args.out_dir)
@@ -316,6 +399,7 @@ def main() -> None:
     fig_classes(ds, out / "classes.png")
     fig_sizes(ds, out / "object-size.png")
     fig_density(ds, out / "density.png")
+    fig_pr_curves(out / "pr-curves.png", Path(args.results_dir))
     if not args.skip_samples:
         fig_samples(AFODataset("all", root=args.root), out / "samples.png")
 
