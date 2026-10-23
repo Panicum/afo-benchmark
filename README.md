@@ -114,7 +114,7 @@ Measured in native pixels, 98.7% of objects fall in medium+large and the `tiny` 
 
 Measured at the resolution the detector actually sees, the same buckets separate the data: feeding a 2560×1440 image to a 640 network shrinks every object ~4×, which is why 62% of objects are sub-16 px at the input and why 1280 is expected to matter. [BENCHMARK.md](BENCHMARK.md) states which convention the leaderboard uses.
 
-Per-class size (native px, median / p95): `human` is the smallest class and the overwhelming majority of objects; `sailboat` and `boat` are the largest. Full breakdown in [notebooks/01_explore.ipynb](notebooks/01_explore.ipynb).
+Object size per class (native px, median √area): `bouy` **35.9** · `human` **77.2** · `kayak` **102.0** · `boat` **125.5** · `wind/sup-board` **175.4** · `sailboat` **238.8**. The two smallest classes are also the two that the benchmark finds hardest — and `human` alone is 83% of all objects, so the dataset's difficulty and its imbalance point the same way. Full breakdown in [notebooks/01_explore.ipynb](notebooks/01_explore.ipynb).
 
 ---
 
