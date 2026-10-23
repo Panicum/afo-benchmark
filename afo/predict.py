@@ -21,9 +21,10 @@ CONF_THRESHOLD = 0.001
 MAX_DET = 300
 
 
-def _image_id_map(gt_json: Path) -> dict[str, int]:
+def _gt_index(gt_json: Path) -> dict[str, tuple[int, int, int]]:
+    """nazwa pliku -> (image_id, szerokosc, wysokosc) z GT."""
     gt = json.loads(Path(gt_json).read_text(encoding="utf-8"))
-    return {img["file_name"]: img["id"] for img in gt["images"]}
+    return {img["file_name"]: (img["id"], img["width"], img["height"]) for img in gt["images"]}
 
 
 def predict_ultralytics(
@@ -44,7 +45,7 @@ def predict_ultralytics(
     images_dir = Path(images_dir) if images_dir else root / "yolo1280" / "images" / "test"
     out_path = Path(out_path)
 
-    id_of = _image_id_map(gt_json)
+    id_of = _gt_index(gt_json)
     files = sorted(p for p in images_dir.iterdir() if p.suffix.lower() in (".jpg", ".jpeg", ".png"))
 
     missing = [p.name for p in files if p.name not in id_of]
@@ -62,6 +63,7 @@ def predict_ultralytics(
 
     model = YOLO(weights)
     results = []
+    n_rescaled = 0
     from tqdm import tqdm
 
     for p in tqdm(files, desc="predict", unit="img"):
@@ -69,7 +71,18 @@ def predict_ultralytics(
             str(p), imgsz=imgsz, conf=conf, max_det=max_det, device=0,
             half=half, verbose=False, augment=False,
         )[0]
-        img_id = id_of[p.name]
+        img_id, gt_w, gt_h = id_of[p.name]
+
+        # Predykcja idzie po pliku z katalogu `images_dir`, ktory moze byc
+        # PRZESKALOWANA kopia (patrz afo.yolo --max-side). Ramki musza wrocic do
+        # ukladu wspolrzednych GT, inaczej IoU z test.json wychodzi zero przy
+        # poprawnie nauczonym modelu — sprawdzone boles­nie: mAP 0,0000 przy
+        # 31 tys. detekcji i val mAP50-95 0,617.
+        src_h, src_w = r.orig_shape
+        sx, sy = gt_w / src_w, gt_h / src_h
+        if (sx, sy) != (1.0, 1.0):
+            n_rescaled += 1
+
         b = r.boxes
         if b is None or len(b) == 0:
             continue
@@ -80,10 +93,16 @@ def predict_ultralytics(
             results.append({
                 "image_id": img_id,
                 "category_id": int(k) + CATEGORY_ID_OFFSET,
-                "bbox": [round(float(x1), 2), round(float(y1), 2),
-                         round(float(x2 - x1), 2), round(float(y2 - y1), 2)],
+                "bbox": [round(float(x1) * sx, 2), round(float(y1) * sy, 2),
+                         round(float(x2 - x1) * sx, 2), round(float(y2 - y1) * sy, 2)],
                 "score": round(float(s), 5),
             })
+
+    if n_rescaled:
+        print(
+            f"[predict] ramki przeskalowane do ukladu GT dla {n_rescaled}/{len(files)} "
+            f"obrazow (predykcja na przeskalowanych kopiach)"
+        )
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(results), encoding="utf-8")

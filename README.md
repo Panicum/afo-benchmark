@@ -143,7 +143,14 @@ All of the above are asserted in [tests/test_counts.py](tests/test_counts.py), s
 Reproducible baselines trained on the official train split, selected on val, reported on **test only**, no test-time augmentation, one shared pycocotools evaluator. Full protocol: [**BENCHMARK.md**](BENCHMARK.md). How to add your result: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 <!-- leaderboard:start -->
-*Phase B in progress — table appears here once the first models have trained.*
+
+**imgsz = 640**
+
+| model | mAP50 | mAP50-95 | AP-tiny (n=4424) | AP-small (n=2930) | params (M) | FPS | wagi |
+|---|---|---|---|---|---|---|---|
+| `yolo11n` | 0.4716 | **0.2417** | 0.2222 | 0.2721 | 2.61 | 59.1 | [HF](https://huggingface.co/jgasienica/afo-yolo11n-640) |
+
+Sortowanie po mAP50-95 na tescie. Kubelki rozmiaru liczone w pikselach **wejscia modelu**, wiec AP-tiny przy 640 i przy 1280 opisuja **inne populacje obiektow** i nie wolno ich porownywac miedzy sekcjami. Jeden bieg na model, bez pomiaru rozrzutu po ziarnach — roznice ponizej ~1 punktu traktowac jak szum. FPS: batch 1, FP16, RTX 4090 **Laptop** GPU. Zadna kolumna nie mierzy falszywych alarmow (test nie ma obrazow tla) — patrz [BENCHMARK.md](BENCHMARK.md).
 <!-- leaderboard:end -->
 
 ---

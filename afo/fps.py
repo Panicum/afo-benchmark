@@ -29,6 +29,13 @@ def _percentiles(xs: list[float]) -> dict[str, float]:
     }
 
 
+#: Ile razy powtorzyc caly przebieg. Pojedynczy pomiar na laptopie zalezy od
+#: stanu cieplnego: te same wagi dawaly 43,8 FPS tuz po 45-minutowym treningu
+#: i 76,2 FPS na zimno (rozrzut 74%). Powtorzenia pod rzad trzymaja sie w 3%,
+#: wiec raportujemy MEDIANE z kilku przebiegow plus zakres.
+DEFAULT_REPEATS = 4
+
+
 def measure_fps(
     weights: str,
     imgsz: int,
@@ -36,8 +43,64 @@ def measure_fps(
     warmup: int = WARMUP_IMAGES,
     half: bool = True,
     max_images: int | None = None,
+    repeats: int = DEFAULT_REPEATS,
 ) -> dict:
-    """Mierzy FPS modelu Ultralytics na zbiorze testowym."""
+    """Mierzy FPS modelu Ultralytics na zbiorze testowym (mediana z ``repeats``)."""
+    n = max(1, repeats)
+    runs = [_measure_once(weights, imgsz, images_dir, warmup, half, max_images) for _ in range(n)]
+
+    # Pierwszy przebieg idzie na zimnym GPU i systematycznie zanizza wynik
+    # (zmierzone: 51,7 wobec 71,1 FPS w kolejnych). Przy >=3 powtorzeniach
+    # traktujemy go jako rozgrzewke cieplna i odrzucamy.
+    dropped = None
+    if n >= 3:
+        dropped = runs[0]["end_to_end"]["fps"]
+        runs = runs[1:]
+
+    e2e = sorted(r["end_to_end"]["fps"] for r in runs)
+    fwd = sorted(r["forward_only"]["fps"] for r in runs)
+    out = dict(runs[-1])
+    out["repeats"] = len(runs)
+    out["warmup_run_discarded_fps"] = dropped
+    out["end_to_end"] = {
+        **runs[0]["end_to_end"],
+        "fps": round(statistics.median(e2e), 2),
+        "fps_min": min(e2e),
+        "fps_max": max(e2e),
+        "fps_all": e2e,
+    }
+    out["forward_only"] = {
+        **runs[0]["forward_only"],
+        "fps": round(statistics.median(fwd), 2),
+        "fps_min": min(fwd),
+        "fps_max": max(fwd),
+        "fps_all": fwd,
+    }
+    spread = 100 * (max(e2e) - min(e2e)) / max(statistics.median(e2e), 1e-9)
+    out["fps_spread_pct"] = round(spread, 1)
+    extra = f", odrzucony przebieg na zimno {dropped}" if dropped is not None else ""
+    print(
+        f"[fps] mediana {out['end_to_end']['fps']} FPS end-to-end "
+        f"(zakres {min(e2e)}–{max(e2e)}, rozrzut {spread:.0f}%, "
+        f"{len(runs)} przebiegi{extra})"
+    )
+    if spread > 15:
+        print(
+            "[fps] UWAGA: rozrzut powyzej 15% — GPU prawdopodobnie zmienia stan cieplny. "
+            "Powtorz pomiar na ustabilizowanej maszynie."
+        )
+    return out
+
+
+def _measure_once(
+    weights: str,
+    imgsz: int,
+    images_dir: Path | str | None = None,
+    warmup: int = WARMUP_IMAGES,
+    half: bool = True,
+    max_images: int | None = None,
+) -> dict:
+    """Pojedynczy przebieg pomiarowy."""
     import torch
     from ultralytics import YOLO
 
@@ -82,11 +145,6 @@ def measure_fps(
             f"tabeli, nie z wynikami z desktopowych kart."
         ),
     }
-    print(
-        f"[fps] {out['end_to_end']['fps']} FPS end-to-end, "
-        f"{out['forward_only']['fps']} FPS sam forward "
-        f"({out['timed_images']} obrazow, {imgsz}px, fp16)"
-    )
     return out
 
 
@@ -100,10 +158,12 @@ def main() -> None:
     ap.add_argument("--images-dir", default=None)
     ap.add_argument("--warmup", type=int, default=WARMUP_IMAGES)
     ap.add_argument("--fp32", action="store_true")
+    ap.add_argument("--repeats", type=int, default=DEFAULT_REPEATS)
     ap.add_argument("--out", default=None)
     a = ap.parse_args()
 
-    r = measure_fps(a.weights, a.imgsz, a.images_dir, a.warmup, half=not a.fp32)
+    r = measure_fps(a.weights, a.imgsz, a.images_dir, a.warmup,
+                    half=not a.fp32, repeats=a.repeats)
     if a.out:
         Path(a.out).write_text(json.dumps(r, indent=2), encoding="utf-8")
         print(f"Zapisano {Path(a.out).resolve()}")

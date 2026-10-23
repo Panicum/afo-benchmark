@@ -1,0 +1,130 @@
+{
+  "gt_json": "C:\\Users\\Jan\\.cache\\afo\\coco\\test.json",
+  "dt_json": "C:\\Users\\Jan\\Projects\\afoDataset\\results\\yolo11n_640\\predictions_test.json",
+  "imgsz": 640,
+  "n_images": 514,
+  "n_gt_objects": 7639,
+  "n_detections": 31127,
+  "max_dets_primary": 300,
+  "class_names": [
+    "human",
+    "wind/sup-board",
+    "boat",
+    "bouy",
+    "sailboat",
+    "kayak"
+  ],
+  "mAP50_95": 0.24169850660757888,
+  "mAP50": 0.47157042028764945,
+  "mAP50_95_maxdets100": 0.24157953749751065,
+  "AP_S_coco": 0.03534295539959467,
+  "AP_M_coco": 0.18195123943199493,
+  "AP_L_coco": 0.3267608054620012,
+  "per_class": {
+    "human": {
+      "AP50_95": 0.16414293382517062,
+      "AP50": 0.5379611458445933,
+      "n_gt": 6511
+    },
+    "wind/sup-board": {
+      "AP50_95": 0.5038151167161455,
+      "AP50": 0.9451811406503979,
+      "n_gt": 634
+    },
+    "boat": {
+      "AP50_95": 0.23476070653650105,
+      "AP50": 0.37703146091494716,
+      "n_gt": 143
+    },
+    "bouy": {
+      "AP50_95": 0.01570359874544521,
+      "AP50": 0.05121698450152526,
+      "n_gt": 59
+    },
+    "sailboat": {
+      "AP50_95": 0.07659755964472977,
+      "AP50": 0.09848726808164689,
+      "n_gt": 28
+    },
+    "kayak": {
+      "AP50_95": 0.455171124177481,
+      "AP50": 0.819544521732786,
+      "n_gt": 264
+    }
+  },
+  "afo_buckets": {
+    "tiny": {
+      "AP50_95": 0.22224200186127313,
+      "AP50": 0.44304348764646895,
+      "n_gt": 4424
+    },
+    "small": {
+      "AP50_95": 0.27212235637460996,
+      "AP50": 0.5442571910247425,
+      "n_gt": 2930
+    },
+    "medium": {
+      "AP50_95": 0.3813073422128634,
+      "AP50": 0.6350091354511885,
+      "n_gt": 285
+    },
+    "large": {
+      "AP50_95": NaN,
+      "AP50": NaN,
+      "n_gt": 0
+    }
+  },
+  "afo_buckets_note": "Pola mierzone po przeskalowaniu do imgsz=640; kubelkow NIE wolno porownywac miedzy roznymi imgsz (inna populacja obiektow).",
+  "speed": {
+    "gpu": "NVIDIA GeForce RTX 4090 Laptop GPU",
+    "imgsz": 640,
+    "precision": "fp16",
+    "batch": 1,
+    "warmup_images": 50,
+    "timed_images": 464,
+    "end_to_end": {
+      "mean_ms": 16.919,
+      "median_ms": 16.083,
+      "p95_ms": 23.951,
+      "fps": 59.11,
+      "fps_min": 55.0,
+      "fps_max": 59.15,
+      "fps_all": [
+        55.0,
+        59.11,
+        59.15
+      ]
+    },
+    "forward_only": {
+      "mean_ms": 8.514,
+      "median_ms": 7.659,
+      "p95_ms": 14.08,
+      "fps": 117.45,
+      "fps_min": 107.9,
+      "fps_max": 119.33,
+      "fps_all": [
+        107.9,
+        117.45,
+        119.33
+      ]
+    },
+    "note": "NVIDIA GeForce RTX 4090 Laptop GPU \u2014 czesc LAPTOPOWA (76 SM wobec 128 w wersji desktopowej), podatna na throttling termiczny. FPS porownywac miedzy wierszami tej tabeli, nie z wynikami z desktopowych kart.",
+    "repeats": 3,
+    "warmup_run_discarded_fps": 59.85,
+    "fps_spread_pct": 7.0
+  },
+  "model": "yolo11n",
+  "framework": "ultralytics",
+  "params_M": 2.61,
+  "gflops": 6.6,
+  "train": {
+    "epochs_budget": 100,
+    "patience": 20,
+    "batch": 64,
+    "seed": 0,
+    "hours": 0.723,
+    "peak_vram_GB": null,
+    "gpu": "NVIDIA GeForce RTX 4090 Laptop GPU"
+  },
+  "weights_hf": "jgasienica/afo-yolo11n-640"
+}

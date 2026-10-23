@@ -38,7 +38,7 @@ def probe_batch(model_name: str, imgsz: int, data: str, limit_frac: float) -> tu
             YOLO(f"{model_name}.pt").train(
                 data=data, epochs=1, imgsz=imgsz, batch=b, device=0, workers=4,
                 fraction=0.03, val=False, plots=False, save=False, verbose=False,
-                project=str(Path.home() / ".cache" / "afo" / "_probe"),
+                project=str((Path.home() / ".cache" / "afo" / "_probe").resolve()),
                 name=f"{model_name}_{imgsz}_{b}", exist_ok=True, seed=0,
             )
         except (RuntimeError, MemoryError) as e:
@@ -52,6 +52,28 @@ def probe_batch(model_name: str, imgsz: int, data: str, limit_frac: float) -> tu
             break
         best, best_peak = b, c.peak_GB
     return best, best_peak
+
+
+def _plain(obj):
+    """Sprowadza strukture do typow, ktore zapisze ``yaml.safe_dump``.
+
+    Powod: ``torch.__version__`` to ``TorchVersion`` (podklasa str), a args.yaml
+    Ultralytics potrafi zawierac obiekty Path. safe_dump wysypuje sie na nich
+    PO zakonczonym treningu, kasujac godzine pracy na zapisie konfiguracji.
+    """
+    if isinstance(obj, dict):
+        return {str(k): _plain(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_plain(v) for v in obj]
+    if obj is None or type(obj) in (bool, int, float, str):
+        return obj
+    if isinstance(obj, bool):
+        return bool(obj)
+    if isinstance(obj, int):
+        return int(obj)
+    if isinstance(obj, float):
+        return float(obj)
+    return str(obj)
 
 
 def git_rev() -> str:
@@ -75,6 +97,10 @@ def main() -> None:
     ap.add_argument("--data", default=None, help="afo.yaml (domyslnie <cache>/yolo1280/afo.yaml)")
     ap.add_argument("--results-dir", default="results")
     ap.add_argument("--workers", type=int, default=8)
+    ap.add_argument(
+        "--post-only", action="store_true",
+        help="pomin trening, policz predykcje/metryki/FPS z istniejacego best.pt",
+    )
     args = ap.parse_args()
 
     import torch
@@ -86,7 +112,11 @@ def main() -> None:
 
     data = args.data or str(dataset_root() / "yolo1280" / "afo.yaml")
     run_name = f"{args.model}_{args.imgsz}"
-    out_dir = Path(args.results_dir) / run_name
+    # Sciezki bezwzgledne: Ultralytics traktuje wzgledny `project` jako podkatalog
+    # swojego runs_dir, wiec "results/_runs" ladowalo w runs/detect/results/_runs.
+    results_root = Path(args.results_dir).resolve()
+    runs_root = results_root / "_runs"
+    out_dir = results_root / run_name
     out_dir.mkdir(parents=True, exist_ok=True)
     log_path = out_dir / "log.txt"
 
@@ -115,22 +145,35 @@ def main() -> None:
         batch, peak = probe_batch(args.model, args.imgsz, data, args.limit_frac)
         print(f"wybrany batch: {batch} (peak {peak:.1f} GB)\n")
 
-    reset_peak()
-    t0 = time.perf_counter()
-    model = YOLO(f"{args.model}.pt")
-    model.train(
-        data=data, epochs=args.epochs, imgsz=args.imgsz, batch=batch, device=0,
-        workers=args.workers, seed=args.seed, patience=args.patience,
-        val=True, plots=True, save=True, exist_ok=True, deterministic=True,
-        project=str(Path(args.results_dir) / "_runs"), name=run_name,
-    )
-    train_s = time.perf_counter() - t0
-    c = check_peak(args.limit_frac)
-    print(f"\ntrening: {train_s/3600:.2f} h | {c}")
-    if not c.fits:
-        print("UWAGA: szczyt przekroczyl limit — czesc biegu mogla thrashowac po PCIe.")
+    if args.post_only:
+        # Nie zmyslamy czasu treningu: czytamy go z results.csv tego biegu.
+        # Zerowe "hours" w metrics.json wygladaloby jak darmowy trening.
+        train_s = None
+        csv = runs_root / run_name / "results.csv"
+        if csv.is_file():
+            rows = [r for r in csv.read_text(encoding="utf-8").splitlines() if r.strip()]
+            if len(rows) > 1:
+                train_s = float(rows[-1].split(",")[1])
+        c = None
+        print(f"--post-only: trening pominiety; czas z results.csv: "
+              f"{'nieznany' if train_s is None else f'{train_s/3600:.2f} h'}")
+    else:
+        reset_peak()
+        t0 = time.perf_counter()
+        model = YOLO(f"{args.model}.pt")
+        model.train(
+            data=data, epochs=args.epochs, imgsz=args.imgsz, batch=batch, device=0,
+            workers=args.workers, seed=args.seed, patience=args.patience,
+            val=True, plots=True, save=True, exist_ok=True, deterministic=True,
+            project=str(runs_root), name=run_name,
+        )
+        train_s = time.perf_counter() - t0
+        c = check_peak(args.limit_frac)
+        print(f"\ntrening: {train_s/3600:.2f} h | {c}")
+        if not c.fits:
+            print("UWAGA: szczyt przekroczyl limit — czesc biegu mogla thrashowac po PCIe.")
 
-    run_dir = Path(args.results_dir) / "_runs" / run_name
+    run_dir = runs_root / run_name
     best = run_dir / "weights" / "best.pt"
     if not best.is_file():
         raise SystemExit(f"Brak {best}")
@@ -143,13 +186,13 @@ def main() -> None:
         "_gpu": gpu,
         "_git_rev": git_rev(),
         "_python": platform.python_version(),
-        "_torch": torch.__version__,
-        "_train_hours": round(train_s / 3600, 3),
-        "_peak_vram_GB": round(c.peak_GB, 2),
+        "_torch": str(torch.__version__),
+        "_train_hours": None if train_s is None else round(train_s / 3600, 3),
+        "_peak_vram_GB": None if c is None else round(c.peak_GB, 2),
         "_command": " ".join([Path(sys.argv[0]).name] + sys.argv[1:]),
     })
     (out_dir / "train_config.yaml").write_text(
-        yaml.safe_dump(cfg, sort_keys=False, allow_unicode=True), encoding="utf-8"
+        yaml.safe_dump(_plain(cfg), sort_keys=False, allow_unicode=True), encoding="utf-8"
     )
 
     # --- predykcje na tescie -------------------------------------------------
@@ -172,15 +215,28 @@ def main() -> None:
     fps = measure_fps(str(best), args.imgsz)
     metrics["speed"] = fps
 
-    info = YOLO(str(best)).model.info(verbose=False)
+    # model.info() zwraca None w ultralytics 8.4 — liczymy sami, zeby kolumna
+    # "params" w leaderboardzie nie byla pusta.
+    bm = YOLO(str(best)).model
+    n_params = sum(p.numel() for p in bm.parameters())
+    gflops = None
+    try:
+        from ultralytics.utils.torch_utils import get_flops
+
+        gflops = round(float(get_flops(bm, args.imgsz)), 1) or None
+    except Exception as e:
+        print(f"UWAGA: nie udalo sie policzyc GFLOPs ({type(e).__name__})")
+
     metrics["model"] = args.model
     metrics["framework"] = "ultralytics"
-    metrics["params_M"] = round(info[1] / 1e6, 2) if info and len(info) > 1 else None
-    metrics["gflops"] = round(info[3], 1) if info and len(info) > 3 else None
+    metrics["params_M"] = round(n_params / 1e6, 2)
+    metrics["gflops"] = gflops
     metrics["train"] = {
         "epochs_budget": args.epochs, "patience": args.patience, "batch": batch,
-        "seed": args.seed, "hours": round(train_s / 3600, 3),
-        "peak_vram_GB": round(c.peak_GB, 2), "gpu": gpu,
+        "seed": args.seed,
+        "hours": None if train_s is None else round(train_s / 3600, 3),
+        "peak_vram_GB": None if c is None else round(c.peak_GB, 2),
+        "gpu": str(gpu),
     }
     metrics["weights_hf"] = f"jgasienica/afo-{args.model}-{args.imgsz}"
 

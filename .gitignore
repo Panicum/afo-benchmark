@@ -23,3 +23,7 @@ PART_3/
 *.weights
 *.onnx
 *.engine
+
+# wagi i surowe biegi frameworka — do repo trafiaja tylko artefakty wynikowe
+results/_runs/
+results/*/best.pt

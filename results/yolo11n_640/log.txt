@@ -1,0 +1,41 @@
+=== yolo11n_640 ===
+GPU: NVIDIA GeForce RTX 4090 Laptop GPU
+sysmem fallback sterownika: True (batch MUSI byc ograniczany pomiarem)
+dane: C:\Users\Jan\.cache\afo\yolo1280\afo.yaml
+
+batch wymuszony: 64
+--post-only: trening pominiety; czas z results.csv: 0.72 h
+
+predykcje na tescie...
+[predict] ramki przeskalowane do ukladu GT dla 514/514 obrazow (predykcja na przeskalowanych kopiach)
+[predict] 31127 detekcji na 514/514 obrazach -> C:\Users\Jan\Projects\afoDataset\results\yolo11n_640\predictions_test.json
+
+=== AFO test — predictions_test.json (imgsz=640) ===
+obrazow 514, obiektow GT 7639, detekcji 31127
+
+mAP50-95 0.2417   mAP50 0.4716   (maxDets=300; przy 100: 0.2416)
+
+AP na klase (AP50-95 / AP50, n obiektow GT):
+  human            0.1641  0.5380   n= 6511
+  wind/sup-board   0.5038  0.9452   n=  634
+  boat             0.2348  0.3770   n=  143
+  bouy             0.0157  0.0512   n=   59
+  sailboat         0.0766  0.0985   n=   28
+  kayak            0.4552  0.8195   n=  264
+
+Kubelki AFO (w pikselach wejscia, imgsz=640):
+  tiny     AP50-95 0.2222   n= 4424
+  small    AP50-95 0.2721   n= 2930
+  medium   AP50-95 0.3813   n=  285
+  large    AP50-95    —     n=    0
+  UWAGA: nieporownywalne miedzy roznymi imgsz.
+
+Standardowe COCO (piksele oryginalu, dla porownania z innymi pracami):
+  AP-S  0.0353
+  AP-M  0.1820
+  AP-L  0.3268
+
+pomiar FPS...
+[fps] mediana 59.11 FPS end-to-end (zakres 55.0–59.15, rozrzut 7%, 3 przebiegi, odrzucony przebieg na zimno 59.85)
+
+Zapisano C:\Users\Jan\Projects\afoDataset\results\yolo11n_640
