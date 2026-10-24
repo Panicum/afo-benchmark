@@ -1,7 +1,7 @@
 === yolov8s_640 ===
 GPU: NVIDIA GeForce RTX 4090 Laptop GPU
 sysmem fallback sterownika: True (batch MUSI byc ograniczany pomiarem)
-dane: C:\Users\Jan\.cache\afo\yolo1280\afo.yaml
+dane: <AFO_ROOT>\yolo1280\afo.yaml
 
 sonda batcha:
 
@@ -239,7 +239,7 @@ trening: 1.24 h | OK: peak 14.6 GB / limit 14.6 GB (z 17.2 GB fizycznych)
 
 predykcje na tescie...
 [predict] ramki przeskalowane do ukladu GT dla 514/514 obrazow (predykcja na przeskalowanych kopiach)
-[predict] 29772 detekcji na 514/514 obrazach -> C:\Users\Jan\Projects\afoDataset\results\yolov8s_640\predictions_test.json
+[predict] 29772 detekcji na 514/514 obrazach -> .\results\yolov8s_640\predictions_test.json
 
 === AFO test — predictions_test.json (imgsz=640) ===
 obrazow 514, obiektow GT 7639, detekcji 29772
@@ -275,4 +275,4 @@ AP (50-95) 0.3163   AP@50 0.6993
 pomiar FPS...
 [fps] mediana 69.99 FPS end-to-end (zakres 69.78–71.23, rozrzut 2%, 3 przebiegi, odrzucony przebieg na zimno 68.61)
 
-Zapisano C:\Users\Jan\Projects\afoDataset\results\yolov8s_640
+Zapisano .\results\yolov8s_640

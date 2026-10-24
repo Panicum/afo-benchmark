@@ -1,7 +1,7 @@
 task: detect
 mode: train
 model: yolov8s.pt
-data: C:\Users\Jan\.cache\afo\yolo1280\afo.yaml
+data: <AFO_ROOT>\yolo1280\afo.yaml
 epochs: 100
 time: null
 patience: 20
@@ -12,7 +12,7 @@ save_period: -1
 cache: false
 device: '0'
 workers: 8
-project: C:\Users\Jan\Projects\afoDataset\results\_runs
+project: .\results\_runs
 name: yolov8s_640
 exist_ok: true
 pretrained: true
@@ -111,7 +111,7 @@ auto_augment: randaugment
 erasing: 0.4
 cfg: null
 tracker: tracktrack.yaml
-save_dir: C:\Users\Jan\Projects\afoDataset\results\_runs\yolov8s_640
+save_dir: .\results\_runs\yolov8s_640
 _afo_protocol: BENCHMARK.md
 _gpu: NVIDIA GeForce RTX 4090 Laptop GPU
 _git_rev: '9344233'

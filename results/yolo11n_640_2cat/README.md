@@ -35,7 +35,7 @@ model-index:
 
 `yolo11n` fine-tuned from COCO-pretrained weights on **[AFO](https://huggingface.co/datasets/jgasienica/afo-dataset)**, a maritime search-and-rescue dataset of 3,641 drone images with 39,991 hand-annotated objects in six classes.
 
-Produced by the reproducible benchmark at **[github.com/jgasienica/afo-dataset](https://github.com/jgasienica/afo-dataset)** under the protocol in [`BENCHMARK.md`](https://github.com/jgasienica/afo-dataset/blob/main/BENCHMARK.md). Every number below is measured on the **official test split** with one shared pycocotools evaluator, so it is comparable to every other row of that leaderboard — and to nothing else.
+Produced by the reproducible benchmark at **[github.com/Panicum/afo-benchmark](https://github.com/Panicum/afo-benchmark)** under the protocol in [`BENCHMARK.md`](https://github.com/Panicum/afo-benchmark/blob/main/BENCHMARK.md). Every number below is measured on the **official test split** with one shared pycocotools evaluator, so it is comparable to every other row of that leaderboard — and to nothing else.
 
 ## Results on the AFO test split
 

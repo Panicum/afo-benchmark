@@ -1,0 +1,283 @@
+=== yolov8m_640 ===
+GPU: NVIDIA GeForce RTX 4090 Laptop GPU
+sysmem fallback sterownika: True (batch MUSI byc ograniczany pomiarem)
+dane: <AFO_ROOT>\yolo1280\afo.yaml
+
+sonda batcha:
+
+
+
+
+
+  batch    8: OK: peak 3.4 GB / limit 14.6 GB (z 17.2 GB fizycznych)
+
+
+
+
+
+  batch   16: OK: peak 6.6 GB / limit 14.6 GB (z 17.2 GB fizycznych)
+
+
+
+
+
+  batch   32: OK: peak 12.1 GB / limit 14.6 GB (z 17.2 GB fizycznych)
+
+
+
+
+
+  batch   64: ZA DUZY: peak 22.8 GB / limit 14.6 GB (z 17.2 GB fizycznych)
+wybrany batch: 32 (peak 12.1 GB)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+trening: 2.81 h | OK: peak 12.6 GB / limit 14.6 GB (z 17.2 GB fizycznych)
+
+predykcje na tescie...
+[predict] ramki przeskalowane do ukladu GT dla 514/514 obrazow (predykcja na przeskalowanych kopiach)
+[predict] 21867 detekcji na 513/514 obrazach -> .\results\yolov8m_640\predictions_test.json
+
+=== AFO test — predictions_test.json (imgsz=640) ===
+obrazow 514, obiektow GT 7639, detekcji 21867
+
+mAP50-95 0.3324   mAP50 0.6442   (maxDets=300; przy 100: 0.3322)
+
+AP na klase (AP50-95 / AP50, n obiektow GT):
+  human            0.1726  0.5516   n= 6511
+  wind/sup-board   0.5041  0.9457   n=  634
+  boat             0.3831  0.6331   n=  143
+  bouy             0.0584  0.1437   n=   59
+  sailboat         0.3589  0.6324   n=   28
+  kayak            0.5171  0.9587   n=  264
+
+Kubelki AFO (stala skala referencyjna: dluzszy bok 640 px):
+  tiny     AP50-95 0.2450   n= 4424
+  small    AP50-95 0.3043   n= 2930
+  medium   AP50-95 0.5178   n=  285
+  large    AP50-95    —     n=    0
+  Skala stala — porownywalne miedzy biegami o roznym imgsz.
+
+Standardowe COCO (piksele oryginalu, dla porownania z innymi pracami):
+  AP-S  0.0061
+  AP-M  0.2486
+  AP-L  0.4161
+
+Punkt pracy (prog maksymalizujacy F1, IoU 0,5, bez rozroznienia klas):
+  prog ufnosci  0.540
+  precyzja 0.7403   recall 0.5814   F1 0.6513
+  falszywych alarmow na obraz: 3.03   przeoczen na obraz: 6.22
+  przy recall 80%: NIEOSIAGALNE (max recall 0.765)
+  przy recall 90%: NIEOSIAGALNE (max recall 0.765)
+
+=== Wersja DWUKLASOWA (definicja klas jak w Tabeli 2 pracy) ===
+AP (50-95) 0.3385   AP@50 0.7447
+  small_obj  AP50-95 0.1714  AP@50 0.5469  n=6570
+  large_obj  AP50-95 0.5056  AP@50 0.9425  n=1069
+  Model uczony na 6 klasach, predykcje scalone po fakcie — nie to samo, co trening na wersji dwuklasowej.
+
+[fps] pominiete — uruchom `scripts/benchmark_fps.py --all` po kolejce
+
+Zapisano .\results\yolov8m_640

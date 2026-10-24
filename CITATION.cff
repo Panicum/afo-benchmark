@@ -9,7 +9,7 @@ authors:
   - family-names: "Gąsienica-Józkowy"
     given-names: "Jan"
     orcid: "https://orcid.org/0009-0009-7120-9083"
-repository-code: "https://github.com/jgasienica/afo-dataset"
+repository-code: "https://github.com/Panicum/afo-benchmark"
 url: "https://huggingface.co/datasets/jgasienica/afo-dataset"
 license: MIT
 keywords:

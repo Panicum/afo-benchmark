@@ -1,0 +1,273 @@
+=== yolov8s_640_2cat ===
+GPU: NVIDIA GeForce RTX 4090 Laptop GPU
+sysmem fallback sterownika: True (batch MUSI byc ograniczany pomiarem)
+dane: <AFO_ROOT>\yolo1280_2cat\afo.yaml
+
+sonda batcha:
+
+
+
+
+
+  batch    8: OK: peak 1.9 GB / limit 14.6 GB (z 17.2 GB fizycznych)
+
+
+
+
+
+  batch   16: OK: peak 3.7 GB / limit 14.6 GB (z 17.2 GB fizycznych)
+
+
+
+
+
+  batch   32: OK: peak 7.0 GB / limit 14.6 GB (z 17.2 GB fizycznych)
+
+
+
+
+
+  batch   64: OK: peak 13.1 GB / limit 14.6 GB (z 17.2 GB fizycznych)
+wybrany batch: 64 (peak 13.1 GB)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+trening: 1.25 h | OK: peak 14.5 GB / limit 14.6 GB (z 17.2 GB fizycznych)
+
+predykcje na tescie...
+[predict] ramki przeskalowane do ukladu GT dla 514/514 obrazow (predykcja na przeskalowanych kopiach)
+[predict] 32580 detekcji na 514/514 obrazach -> .\results\yolov8s_640_2cat\predictions_test.json
+
+=== AFO test — predictions_test.json (imgsz=640) ===
+obrazow 514, obiektow GT 7639, detekcji 32580
+
+mAP50-95 0.3143   mAP50 0.7014   (maxDets=300; przy 100: 0.3139)
+
+AP na klase (AP50-95 / AP50, n obiektow GT):
+  small_obj        0.1323  0.4624   n= 6570
+  large_obj        0.4962  0.9405   n= 1069
+
+Kubelki AFO (stala skala referencyjna: dluzszy bok 640 px):
+  tiny     AP50-95 0.2018   n= 4424
+  small    AP50-95 0.3235   n= 2930
+  medium   AP50-95 0.5403   n=  285
+  large    AP50-95    —     n=    0
+  Skala stala — porownywalne miedzy biegami o roznym imgsz.
+
+Standardowe COCO (piksele oryginalu, dla porownania z innymi pracami):
+  AP-S  0.0038
+  AP-M  0.2868
+  AP-L  0.3252
+
+Punkt pracy (prog maksymalizujacy F1, IoU 0,5, bez rozroznienia klas):
+  prog ufnosci  0.420
+  precyzja 0.6459   recall 0.5667   F1 0.6037
+  falszywych alarmow na obraz: 4.62   przeoczen na obraz: 6.44
+  przy recall 80%: NIEOSIAGALNE (max recall 0.737)
+  przy recall 90%: NIEOSIAGALNE (max recall 0.737)
+
+[fps] pominiete — uruchom `scripts/benchmark_fps.py --all` po kolejce
+
+Zapisano .\results\yolov8s_640_2cat

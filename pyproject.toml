@@ -31,7 +31,8 @@ train = ["ultralytics>=8.3", "rfdetr>=1.1", "torch>=2.1"]
 dev = ["pytest>=7.4"]
 
 [project.urls]
-Homepage = "https://huggingface.co/datasets/jgasienica/afo-dataset"
+Homepage = "https://github.com/Panicum/afo-benchmark"
+Dataset = "https://huggingface.co/datasets/jgasienica/afo-dataset"
 Paper = "https://doi.org/10.3233/ICA-210649"
 
 [tool.setuptools.packages.find]

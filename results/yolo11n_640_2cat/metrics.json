@@ -1,6 +1,6 @@
 {
-  "gt_json": "C:\\Users\\Jan\\.cache\\afo\\coco2cat\\test.json",
-  "dt_json": "results\\yolo11n_640_2cat\\predictions_test.json",
+  "gt_json": "<AFO_ROOT>/coco2cat/test.json",
+  "dt_json": "results/yolo11n_640_2cat/predictions_test.json",
   "imgsz": 640,
   "n_images": 514,
   "n_gt_objects": 7639,

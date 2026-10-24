@@ -1,6 +1,6 @@
 {
-  "gt_json": "C:\\Users\\Jan\\.cache\\afo\\coco\\test.json",
-  "dt_json": "results\\yolov8s_640\\predictions_test.json",
+  "gt_json": "<AFO_ROOT>/coco/test.json",
+  "dt_json": "results/yolov8s_640/predictions_test.json",
   "imgsz": 640,
   "n_images": 514,
   "n_gt_objects": 7639,
@@ -112,8 +112,8 @@
   },
   "categories": "6categories",
   "two_category": {
-    "gt_json": "C:\\Users\\Jan\\AppData\\Local\\Temp\\tmp1t0a3t9n\\gt_2cat.json",
-    "dt_json": "C:\\Users\\Jan\\AppData\\Local\\Temp\\tmp1t0a3t9n\\dt_2cat.json",
+    "gt_json": "<AFO_ROOT>/coco/test.json (scalone do 2 klas)",
+    "dt_json": "results/yolov8s_640/predictions_test.json (scalone do 2 klas)",
     "imgsz": 640,
     "n_images": 514,
     "n_gt_objects": 7639,

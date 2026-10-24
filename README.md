@@ -167,6 +167,9 @@ AFO ships two label sets, and they are **two different tasks**. This repository 
 
 | model | mAP50 | mAP50-95 | AP-tiny (n=4424) | AP-small (n=2930) | params (M) | FPS | weights |
 |---|---|---|---|---|---|---|---|
+| `yolov8m` | 0.6442 | **0.3324** | 0.2450 | 0.3043 | 25.86 | — | [HF](https://huggingface.co/jgasienica/afo-yolov8m-640) |
+| `yolo11m` | 0.6137 | **0.3170** | 0.2917 | 0.2876 | 20.06 | — | [HF](https://huggingface.co/jgasienica/afo-yolo11m-640) |
+| `yolo11s` | 0.5290 | **0.2737** | 0.2820 | 0.3030 | 9.43 | — | [HF](https://huggingface.co/jgasienica/afo-yolo11s-640) |
 | `yolov8s` | 0.5231 | **0.2630** | 0.2592 | 0.2848 | 11.14 | 70.0 | [HF](https://huggingface.co/jgasienica/afo-yolov8s-640) |
 | `yolo11n` | 0.4716 | **0.2417** | 0.2222 | 0.2721 | 2.61 | 63.2 | [HF](https://huggingface.co/jgasienica/afo-yolo11n-640) |
 | `yolov8n` | 0.4928 | **0.2401** | 0.2383 | 0.2560 | 3.14 | 66.7 | [HF](https://huggingface.co/jgasienica/afo-yolov8n-640) |
@@ -209,8 +212,12 @@ python scripts/train_ultralytics.py --model yolo11n --imgsz 640 --categories 2ca
 |---|---|---|---|---|---|---|---|
 | SSD300 (MobileNet v2) | paper 2021 | 300 | 14.35 | 41.40 | 24.34 | 58.45 | — |
 | YOLOv3 (Darknet53) | paper 2021 | 544 | 24.40 | 68.58 | 51.08 | 86.08 | — |
+| `yolov8n` @640 | **this repo** | 640 | **29.71** | **67.45** | 44.23 | 90.67 | [HF](https://huggingface.co/jgasienica/afo-yolov8n-640-2cat) |
+| `yolov8s` @640 | **this repo** | 640 | **31.43** | **70.14** | 46.24 | 94.05 | [HF](https://huggingface.co/jgasienica/afo-yolov8s-640-2cat) |
 | YOLOv4 (CSPDarknet53-PANet-SPP) | paper 2021 | 544 | 31.50 | 71.13 | 54.58 | 87.67 | — |
 | `yolo11n` @640 | **this repo** | 640 | **32.06** | **72.87** | 56.90 | 88.84 | [HF](https://huggingface.co/jgasienica/afo-yolo11n-640-2cat) |
+| `yolo11s` @640 | **this repo** | 640 | **32.08** | **70.67** | 48.04 | 93.30 | [HF](https://huggingface.co/jgasienica/afo-yolo11s-640-2cat) |
+| `yolov8m` @640 | **this repo** | 640 | **33.09** | **71.69** | 49.53 | 93.85 | [HF](https://huggingface.co/jgasienica/afo-yolov8m-640-2cat) |
 | Faster R-CNN (R50-FPN) | paper 2021 | 1333 | 33.35 | 78.51 | 67.08 | 89.94 | — |
 | RetinaNet (R50) | paper 2021 | 1333 | 34.93 | 79.82 | 69.31 | 90.31 | — |
 | RetinaNet (R101) | paper 2021 | 1333 | 35.83 | 79.36 | 65.00 | 93.71 | — |

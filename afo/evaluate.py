@@ -89,6 +89,25 @@ def _scale_areas(coco_dict_or_obj, scale_by_img: dict[int, float], is_gt: bool):
         ann["area"] = ann["area"] * s * s
 
 
+def _portable(path: Path | str) -> str:
+    """Sciezka niezalezna od maszyny: cache AFO jako <AFO_ROOT>, reszta wzgledna."""
+    import os
+
+    p = Path(path).resolve()
+    try:
+        from .download import default_root
+
+        root = default_root()
+        if p.is_relative_to(root):
+            return "<AFO_ROOT>/" + p.relative_to(root).as_posix()
+    except Exception:
+        pass
+    try:
+        return p.relative_to(Path(os.getcwd()).resolve()).as_posix()
+    except ValueError:
+        return p.name
+
+
 def operating_point(
     gt_doc: dict,
     dets: list[dict],
@@ -253,8 +272,10 @@ def evaluate(
 
     n_gt = len(gt.getAnnIds())
     result: dict[str, Any] = {
-        "gt_json": str(gt_json),
-        "dt_json": str(dt_json),
+        # Sciezki zapisujemy przenosnie: artefakty trafiaja do publicznego repo,
+        # a bezwzgledna sciezka z czyjegos dysku nie niesie tam zadnej informacji.
+        "gt_json": _portable(gt_json),
+        "dt_json": _portable(dt_json),
         "imgsz": imgsz,
         "n_images": len(gt.imgs),
         "n_gt_objects": n_gt,
@@ -444,6 +465,9 @@ def evaluate_two_category(
     dt_p.write_text(_json.dumps(dt), encoding="utf-8")
 
     r = evaluate(gt_p, dt_p, imgsz=imgsz, verbose=False)
+    # sciezki wskazuja katalog tymczasowy — zastepujemy opisem zrodla
+    r["gt_json"] = f"{_portable(gt_json)} (scalone do 2 klas)"
+    r["dt_json"] = f"{_portable(dt_json)} (scalone do 2 klas)"
     r["categories"] = "2 (small_obj = human+bouy; large_obj = board/boat/sailboat/kayak)"
     r["caveat"] = (
         "Model uczony na 6 klasach, predykcje scalone po fakcie — nie to samo, "
