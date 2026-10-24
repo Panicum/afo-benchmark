@@ -55,11 +55,17 @@ class Job:
 
 
 # Kolejnosc = priorytet. Najpierw domkniecie obu gallezi YOLO przy 640 (rdzen
-# benchmarku), potem 1280, na koncu RF-DETR. Czasy z ukonczonych biegow:
-# n ~0,6 h, s ~1,3 h, m ~2,2 h przy 640.
+# benchmarku), potem 1280, na koncu RF-DETR.
+#
+# Szacunki przy 640 to MEDIANY ZMIERZONYCH biegow (11 sztuk), nie kalibracja:
+#   n 0,60-0,74 h | s 1,10-1,25 h | m 2,69-2,81 h
+# Przy 1280 i dla RF-DETR nadal nie ma ukonczonego biegu, wiec to gorne
+# oszacowania z krotkiej kalibracji — a ta zawyzala ~3x, gdy ja sprawdzono
+# na 640. Zostawione z zapasem: lepiej pominac bieg, ktory by sie zmiescil,
+# niz obudzic sie z urwanym w polowie.
 YOLO_640 = ["yolov8n", "yolov8s", "yolov8m", "yolo11n", "yolo11s", "yolo11m"]
-EST_640 = {"yolov8n": 0.6, "yolo11n": 0.7, "yolov8s": 1.3, "yolo11s": 1.3,
-           "yolov8m": 2.2, "yolo11m": 2.2}
+EST_640 = {"yolov8n": 0.7, "yolo11n": 0.7, "yolov8s": 1.3, "yolo11s": 1.3,
+           "yolov8m": 2.8, "yolo11m": 2.8}
 
 
 def default_plan() -> list[Job]:
