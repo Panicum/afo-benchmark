@@ -14,6 +14,7 @@ jest raportowany i kolejka idzie dalej.
 from __future__ import annotations
 
 import argparse
+import datetime as _dt
 import json
 import os
 import subprocess
@@ -27,6 +28,32 @@ PY = sys.executable
 #: Konsola Windows bywa cp1252 i wywraca sie na polskich znakach w logach
 #: podprocesow. Wymuszamy UTF-8 dla wszystkiego, co uruchamiamy.
 ENV = {**os.environ, "PYTHONIOENCODING": "utf-8"}
+
+#: Log samej kolejki. Pojedyncze biegi zapisuja sie same (results/<bieg>/log.txt),
+#: ale warstwa "co ruszylo, co pominieto i dlaczego" szla dotad tylko na konsole
+#: i ginela razem z zamknietym oknem. Dopisywany, nie nadpisywany — historia
+#: kolejnych nocy jest czesto tym, czego szuka sie najpierw.
+QUEUE_LOG = Path("results/_queue.log")
+
+
+class _Tee:
+    """Pisze na konsole i do pliku naraz."""
+
+    def __init__(self, path: Path):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        self.f = open(path, "a", encoding="utf-8")
+        bar = "=" * 70
+        stamp = _dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.f.write(f"\n{bar}\n[queue] start {stamp} — {' '.join(sys.argv)}\n{bar}\n")
+
+    def write(self, s):
+        sys.__stdout__.write(s)
+        self.f.write(s)
+        self.f.flush()
+
+    def flush(self):
+        sys.__stdout__.flush()
+        self.f.flush()
 
 
 @dataclass
@@ -73,9 +100,12 @@ def default_plan() -> list[Job]:
     for cats in ("6categories", "2categories"):
         for m in YOLO_640:
             jobs.append(Job(m, 640, cats, est_h=EST_640[m]))
-    # 1280 dla najlepszego YOLO — model wybierany dynamicznie przed startem
-    jobs.append(Job("__best_yolo__", 1280, "6categories", est_h=3.5))
-    jobs.append(Job("__best_yolo__", 1280, "2categories", est_h=3.5))
+    # 1280 dla najlepszego YOLO — model wybierany dynamicznie przed startem.
+    # ZMIERZONE: yolov8m @1280 zajal 9,11 h, nie 3,5 h jak szacowano. Przy 1280
+    # sonda scina batch z 32 na 8, wiec krokow na epoke jest 4x wiecej, a do
+    # tego 4x wiecej pikseli do dekodowania. Szacunek podniesiony do pomiaru.
+    jobs.append(Job("__best_yolo__", 1280, "6categories", est_h=9.0))
+    jobs.append(Job("__best_yolo__", 1280, "2categories", est_h=9.0))
     for size, est in (("nano", 2.5), ("small", 3.5), ("base", 5.0)):
         jobs.append(Job(f"rfdetr-{size}", 640, "6categories", "rfdetr", est))
     return jobs
@@ -116,6 +146,9 @@ def main() -> None:
     results_dir = Path(args.results_dir)
     jobs = default_plan()
     t_start = time.perf_counter()
+    if not args.plan:
+        sys.stdout = _Tee(QUEUE_LOG)
+        print(f"[queue] log kolejki: {QUEUE_LOG.resolve()}")
 
     print(f"{'bieg':28s} {'framework':12s} {'szac. h':>8s}  status")
     print("-" * 70)
@@ -185,6 +218,7 @@ def main() -> None:
     print(f"[queue] ukonczone ({len(ok)}): {', '.join(ok)}")
     if failed:
         print(f"[queue] NIEUDANE ({len(failed)}): {', '.join(failed)}")
+    print(f"[queue] koniec {_dt.datetime.now():%Y-%m-%d %H:%M:%S}")
 
 
 if __name__ == "__main__":

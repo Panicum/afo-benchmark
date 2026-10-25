@@ -31,3 +31,6 @@ results/*/best.pt
 # praca opublikowana w czasopismie — prawa po stronie wydawcy, nigdy nie commitujemy
 paper.pdf
 *.pdf
+
+# log kolejki — stan maszyny, nie wynik badania
+results/_queue.log

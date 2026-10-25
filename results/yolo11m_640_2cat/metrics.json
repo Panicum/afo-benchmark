@@ -1,0 +1,105 @@
+{
+  "gt_json": "<AFO_ROOT>/coco2cat/test.json",
+  "dt_json": "results/yolo11m_640_2cat/predictions_test.json",
+  "imgsz": 640,
+  "n_images": 514,
+  "n_gt_objects": 7639,
+  "n_detections": 26996,
+  "max_dets_primary": 300,
+  "class_names": [
+    "small_obj",
+    "large_obj"
+  ],
+  "mAP50_95": 0.33486252589718485,
+  "mAP50": 0.7296889263157692,
+  "mAP50_95_maxdets100": 0.3344749061106834,
+  "AP_S_coco": 0.006457846719578771,
+  "AP_M_coco": 0.29632166537402055,
+  "AP_L_coco": 0.35501401342006356,
+  "per_class": {
+    "small_obj": {
+      "AP50_95": 0.16736731166596805,
+      "AP50": 0.5486530983313188,
+      "n_gt": 6570
+    },
+    "large_obj": {
+      "AP50_95": 0.5023577401284017,
+      "AP50": 0.9107247543002197,
+      "n_gt": 1069
+    }
+  },
+  "afo_buckets": {
+    "tiny": {
+      "AP50_95": 0.25919858456529155,
+      "AP50": 0.594245117005803,
+      "n_gt": 4424
+    },
+    "small": {
+      "AP50_95": 0.35164173027609147,
+      "AP50": 0.774769763121449,
+      "n_gt": 2930
+    },
+    "medium": {
+      "AP50_95": 0.523706902388556,
+      "AP50": 0.8874405668472412,
+      "n_gt": 285
+    },
+    "large": {
+      "AP50_95": NaN,
+      "AP50": NaN,
+      "n_gt": 0
+    }
+  },
+  "afo_buckets_reference_side": 640,
+  "afo_buckets_note": "Pola mierzone po przeskalowaniu kazdego obrazu do dluzszego boku 640 px. Skala jest stala i niezalezna od imgsz, wiec kubelki opisuja te sama populacje obiektow we wszystkich biegach i SA porownywalne miedzy 640 a 1280.",
+  "operating_point": {
+    "threshold": 0.41,
+    "precision": 0.6710362908789844,
+    "recall": 0.6366016494305538,
+    "f1": 0.6533655783958081,
+    "tp": 4863,
+    "fp": 2384,
+    "fn": 2776,
+    "fp_per_image": 4.638132295719845,
+    "fn_per_image": 5.400778210116732,
+    "n_images": 514,
+    "n_gt_objects": 7639,
+    "iou_threshold": 0.5,
+    "class_agnostic": true,
+    "at_recall": {
+      "r80": {
+        "reachable": false,
+        "max_recall": 0.7904175939259065,
+        "note": "model nie osiaga recallu 0.8 przy zadnym progu"
+      },
+      "r90": {
+        "reachable": false,
+        "max_recall": 0.7904175939259065,
+        "note": "model nie osiaga recallu 0.9 przy zadnym progu"
+      }
+    },
+    "recall_ceiling": {
+      "recall": 0.7904175939259065,
+      "threshold": 0.0,
+      "missed_objects": 1601,
+      "note": "Najwyzszy osiagalny recall, przy progu zbiegajacym do zera. Obiekty ponad ten sufit nie sa znajdowane przy ZADNEJ ufnosci \u2014 zadne strojenie progu ich nie odzyska."
+    },
+    "note": "Progi dobrane na zbiorze TESTOWYM \u2014 to gorne ograniczenia, bo wybrane na tych samych danych, na ktorych mierzone. Do wdrozenia prog dobiera sie na walidacji. Dopasowanie BEZ rozroznienia klas, wiec ta diagnostyka wazy obiektami, podczas gdy mAP wazy klasami \u2014 przy 85% udziale klasy human obie moga dac inna kolejnosc modeli i obie sa poprawne."
+  },
+  "categories": "2categories",
+  "speed": null,
+  "model": "yolo11m",
+  "framework": "ultralytics",
+  "params_M": 20.05,
+  "gflops": 68.3,
+  "train": {
+    "epochs_budget": 100,
+    "patience": 20,
+    "batch": 16,
+    "seed": 0,
+    "hours": 2.507,
+    "peak_vram_GB": 8.63,
+    "gpu": "NVIDIA GeForce RTX 4090 Laptop GPU"
+  },
+  "weights_hf": "jgasienica/afo-yolo11m-640-2cat"
+}

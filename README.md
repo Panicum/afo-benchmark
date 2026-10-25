@@ -174,6 +174,12 @@ AFO ships two label sets, and they are **two different tasks**. This repository 
 | `yolo11n` | 0.4716 | **0.2417** | 0.2222 | 0.2721 | 2.61 | 63.2 | [HF](https://huggingface.co/jgasienica/afo-yolo11n-640) |
 | `yolov8n` | 0.4928 | **0.2401** | 0.2383 | 0.2560 | 3.14 | 66.7 | [HF](https://huggingface.co/jgasienica/afo-yolov8n-640) |
 
+**imgsz = 1280**
+
+| model | mAP50 | mAP50-95 | AP-tiny (n=4424) | AP-small (n=2930) | params (M) | FPS | weights |
+|---|---|---|---|---|---|---|---|
+| `yolov8m` | 0.7013 | **0.3749** | 0.2716 | 0.3172 | 25.86 | — | [HF](https://huggingface.co/jgasienica/afo-yolov8m-1280) |
+
 Sorted by test mAP50-95. Size buckets use a **fixed reference scale** — every image rescaled to a 640 px longest side, independent of the training resolution — so AP-tiny means the same population of objects in every row and 640 is directly comparable with 1280. One run per model, no seed-variance estimate: treat gaps under ~1 point as noise. FPS: batch 1, FP16, RTX 4090 **Laptop** GPU, measured in a separate pass after a thermal cool-down with the temperature recorded alongside. mAP does penalise false alarms on water; for the operating-point view (F1-optimal threshold, false alarms per image) read `operating_point` in each `metrics.json` — see [BENCHMARK.md](BENCHMARK.md).
 <!-- leaderboard:end -->
 
@@ -219,6 +225,7 @@ python scripts/train_ultralytics.py --model yolo11n --imgsz 640 --categories 2ca
 | `yolo11s` @640 | **this repo** | 640 | **32.08** | **70.67** | 48.04 | 93.30 | [HF](https://huggingface.co/jgasienica/afo-yolo11s-640-2cat) |
 | `yolov8m` @640 | **this repo** | 640 | **33.09** | **71.69** | 49.53 | 93.85 | [HF](https://huggingface.co/jgasienica/afo-yolov8m-640-2cat) |
 | Faster R-CNN (R50-FPN) | paper 2021 | 1333 | 33.35 | 78.51 | 67.08 | 89.94 | — |
+| `yolo11m` @640 | **this repo** | 640 | **33.49** | **72.97** | 54.87 | 91.07 | [HF](https://huggingface.co/jgasienica/afo-yolo11m-640-2cat) |
 | RetinaNet (R50) | paper 2021 | 1333 | 34.93 | 79.82 | 69.31 | 90.31 | — |
 | RetinaNet (R101) | paper 2021 | 1333 | 35.83 | 79.36 | 65.00 | 93.71 | — |
 | Faster R-CNN (R101-FPN) | paper 2021 | 1333 | 36.25 | 78.97 | 64.11 | 93.82 | — |

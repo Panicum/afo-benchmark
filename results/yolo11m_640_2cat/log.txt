@@ -1,0 +1,267 @@
+=== yolo11m_640_2cat ===
+GPU: NVIDIA GeForce RTX 4090 Laptop GPU
+sysmem fallback sterownika: True (batch MUSI byc ograniczany pomiarem)
+dane: C:\Users\Jan\.cache\afo\yolo1280_2cat\afo.yaml
+
+sonda batcha:
+
+
+
+
+
+  batch    8: OK: peak 4.3 GB / limit 14.6 GB (z 17.2 GB fizycznych)
+
+
+
+
+
+  batch   16: OK: peak 8.3 GB / limit 14.6 GB (z 17.2 GB fizycznych)
+
+
+
+
+
+  batch   32: ZA DUZY: peak 15.9 GB / limit 14.6 GB (z 17.2 GB fizycznych)
+wybrany batch: 16 (peak 8.3 GB)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+trening: 2.51 h | OK: peak 8.6 GB / limit 14.6 GB (z 17.2 GB fizycznych)
+
+predykcje na tescie...
+[predict] ramki przeskalowane do ukladu GT dla 514/514 obrazow (predykcja na przeskalowanych kopiach)
+[predict] 26996 detekcji na 514/514 obrazach -> C:\Users\Jan\Projects\afoDataset\results\yolo11m_640_2cat\predictions_test.json
+
+=== AFO test — predictions_test.json (imgsz=640) ===
+obrazow 514, obiektow GT 7639, detekcji 26996
+
+mAP50-95 0.3349   mAP50 0.7297   (maxDets=300; przy 100: 0.3345)
+
+AP na klase (AP50-95 / AP50, n obiektow GT):
+  small_obj        0.1674  0.5487   n= 6570
+  large_obj        0.5024  0.9107   n= 1069
+
+Kubelki AFO (stala skala referencyjna: dluzszy bok 640 px):
+  tiny     AP50-95 0.2592   n= 4424
+  small    AP50-95 0.3516   n= 2930
+  medium   AP50-95 0.5237   n=  285
+  large    AP50-95    —     n=    0
+  Skala stala — porownywalne miedzy biegami o roznym imgsz.
+
+Standardowe COCO (piksele oryginalu, dla porownania z innymi pracami):
+  AP-S  0.0065
+  AP-M  0.2963
+  AP-L  0.3550
+
+Punkt pracy (prog maksymalizujacy F1, IoU 0,5, bez rozroznienia klas):
+  prog ufnosci  0.410
+  precyzja 0.6710   recall 0.6366   F1 0.6534
+  falszywych alarmow na obraz: 4.64   przeoczen na obraz: 5.40
+  przy recall 80%: NIEOSIAGALNE (max recall 0.790)
+  przy recall 90%: NIEOSIAGALNE (max recall 0.790)
+
+[fps] pominiete — uruchom `scripts/benchmark_fps.py --all` po kolejce
+
+Zapisano C:\Users\Jan\Projects\afoDataset\results\yolo11m_640_2cat
