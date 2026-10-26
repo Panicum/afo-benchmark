@@ -1,0 +1,18 @@
+_afo_protocol: BENCHMARK.md
+framework: rfdetr
+model: rfdetr-nano
+imgsz: 640
+categories: 6categories
+epochs: 100
+patience: 20
+batch_size: 8
+grad_accum_steps: 2
+seed: 0
+dataset_dir: C:\Users\Jan\.cache\afo\rfdetr_yolo1280
+checkpoint: checkpoint_best_ema.pth
+_gpu: NVIDIA GeForce RTX 4090 Laptop GPU
+_git_rev: 326f6ea
+_python: 3.13.2
+_torch: 2.6.0+cu124
+_train_hours: 5.87
+_command: train_rfdetr.py --size nano --imgsz 640 --post-only --train-hours 5.87

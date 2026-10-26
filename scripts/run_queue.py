@@ -106,13 +106,24 @@ def default_plan() -> list[Job]:
     # tego 4x wiecej pikseli do dekodowania. Szacunek podniesiony do pomiaru.
     jobs.append(Job("__best_yolo__", 1280, "6categories", est_h=9.0))
     jobs.append(Job("__best_yolo__", 1280, "2categories", est_h=9.0))
-    for size, est in (("nano", 2.5), ("small", 3.5), ("base", 5.0)):
-        jobs.append(Job(f"rfdetr-{size}", 640, "6categories", "rfdetr", est))
+    # RF-DETR w OBU galeziach — protokol (§3) mowi, ze jedyna roznica miedzy
+    # ramionami jest --categories. rfdetr-nano @640 zmierzony: 5,87 h, czyli
+    # ponad dwa razy wiecej niz szacowane 2,5 h; reszta skalowana w tej proporcji.
+    EST_RFDETR = {"nano": 5.9, "small": 7.5, "base": 10.0}
+    for cats in ("6categories", "2categories"):
+        for size, est in EST_RFDETR.items():
+            jobs.append(Job(f"rfdetr-{size}", 640, cats, "rfdetr", est))
+    # 1280 dla najlepszego RF-DETR, jak dla YOLO (§2)
+    jobs.append(Job("__best_rfdetr__", 1280, "6categories", "rfdetr", est_h=14.0))
+    jobs.append(Job("__best_rfdetr__", 1280, "2categories", "rfdetr", est_h=14.0))
+    # RT-DETR-l — w tabeli modeli oznaczony jako opcjonalny
+    jobs.append(Job("rtdetr-l", 640, "6categories", est_h=4.0))
+    jobs.append(Job("rtdetr-l", 640, "2categories", est_h=4.0))
     return jobs
 
 
-def best_yolo(results_dir: Path, categories: str) -> str | None:
-    """Najlepszy ukonczony model YOLO @640 w danej galezi, wg test mAP50-95."""
+def best_of(results_dir: Path, categories: str, framework: str) -> str | None:
+    """Najlepszy ukonczony model @640 danego frameworka w danej galezi."""
     best, best_v = None, -1.0
     for p in results_dir.glob("*/metrics.json"):
         try:
@@ -121,7 +132,7 @@ def best_yolo(results_dir: Path, categories: str) -> str | None:
             continue
         if m.get("imgsz") != 640 or m.get("categories", "6categories") != categories:
             continue
-        if m.get("framework") != "ultralytics":
+        if m.get("framework") != framework:
             continue
         v = m.get("mAP50_95")
         if v is not None and v > best_v:
@@ -155,7 +166,7 @@ def main() -> None:
     todo: list[Job] = []
     for j in jobs:
         name = j.run_name
-        if "__best_yolo__" in name:
+        if name.startswith("__best_"):
             status = "zaleznie od wynikow @640"
         elif done(results_dir, name):
             status = "GOTOWE — pomijam"

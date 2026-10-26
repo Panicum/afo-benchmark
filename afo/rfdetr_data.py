@@ -29,6 +29,7 @@ def prepare_rfdetr(
     images_from: Path | str | None = None,
     out_dir: Path | str | None = None,
     clip: bool = True,
+    categories: str = "6categories",
 ) -> Path:
     """Buduje uklad dla rfdetr i zwraca katalog glowny.
 
@@ -45,7 +46,7 @@ def prepare_rfdetr(
     from PIL import Image
 
     for split in SPLITS:
-        ds = AFODataset(split, root=root, clip=clip)
+        ds = AFODataset(split, root=root, clip=clip, categories=categories)
         dst_dir = out / SPLIT_DIRNAME[split]
         dst_dir.mkdir(parents=True, exist_ok=True)
 
@@ -110,8 +111,9 @@ def main() -> None:
     ap.add_argument("--root", default=None)
     ap.add_argument("--images-from", default=None, help="katalog <...>/images z afo.yolo")
     ap.add_argument("--out", default=None)
+    ap.add_argument("--categories", default="6categories")
     args = ap.parse_args()
-    prepare_rfdetr(args.root, args.images_from, args.out)
+    prepare_rfdetr(args.root, args.images_from, args.out, categories=args.categories)
 
 
 if __name__ == "__main__":

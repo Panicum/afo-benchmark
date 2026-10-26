@@ -1,0 +1,111 @@
+{
+  "gt_json": "<AFO_ROOT>/coco2cat/test.json",
+  "dt_json": "results/yolo11m_1280_2cat/predictions_test.json",
+  "imgsz": 1280,
+  "n_images": 514,
+  "n_gt_objects": 7639,
+  "n_detections": 34739,
+  "max_dets_primary": 300,
+  "class_names": [
+    "small_obj",
+    "large_obj"
+  ],
+  "mAP50_95": 0.36287678899719683,
+  "mAP50": 0.7772260275778997,
+  "mAP50_95_maxdets100": 0.3619601290228744,
+  "AP_S_coco": 0.012894597150219464,
+  "AP_M_coco": 0.33210167974581134,
+  "AP_L_coco": 0.373954664734372,
+  "per_class": {
+    "small_obj": {
+      "AP50_95": 0.2028498718280596,
+      "AP50": 0.6215482583602074,
+      "n_gt": 6570
+    },
+    "large_obj": {
+      "AP50_95": 0.5229037061663341,
+      "AP50": 0.9329037967955918,
+      "n_gt": 1069
+    }
+  },
+  "afo_buckets": {
+    "tiny": {
+      "AP50_95": 0.2790879106603348,
+      "AP50": 0.6033327677147525,
+      "n_gt": 4424
+    },
+    "small": {
+      "AP50_95": 0.36511537709652214,
+      "AP50": 0.8062947702767518,
+      "n_gt": 2930
+    },
+    "medium": {
+      "AP50_95": 0.5808838515118713,
+      "AP50": 0.9763169227363734,
+      "n_gt": 285
+    },
+    "large": {
+      "AP50_95": NaN,
+      "AP50": NaN,
+      "n_gt": 0
+    }
+  },
+  "afo_buckets_reference_side": 640,
+  "afo_buckets_note": "Pola mierzone po przeskalowaniu kazdego obrazu do dluzszego boku 640 px. Skala jest stala i niezalezna od imgsz, wiec kubelki opisuja te sama populacje obiektow we wszystkich biegach i SA porownywalne miedzy 640 a 1280.",
+  "operating_point": {
+    "threshold": 0.48,
+    "precision": 0.7370707778556412,
+    "recall": 0.6884408954051577,
+    "f1": 0.7119263571138487,
+    "tp": 5259,
+    "fp": 1876,
+    "fn": 2380,
+    "fp_per_image": 3.649805447470817,
+    "fn_per_image": 4.63035019455253,
+    "n_images": 514,
+    "n_gt_objects": 7639,
+    "iou_threshold": 0.5,
+    "class_agnostic": true,
+    "at_recall": {
+      "r80": {
+        "threshold": 0.02,
+        "precision": 0.4104467629748529,
+        "recall": 0.8033774054195575,
+        "f1": 0.543313708999159,
+        "tp": 6137,
+        "fp": 8815,
+        "fn": 1502,
+        "fp_per_image": 17.14980544747082,
+        "fn_per_image": 2.922178988326848
+      },
+      "r90": {
+        "reachable": false,
+        "max_recall": 0.8563948160754026,
+        "note": "model nie osiaga recallu 0.9 przy zadnym progu"
+      }
+    },
+    "recall_ceiling": {
+      "recall": 0.8563948160754026,
+      "threshold": 0.0,
+      "missed_objects": 1097,
+      "note": "Najwyzszy osiagalny recall, przy progu zbiegajacym do zera. Obiekty ponad ten sufit nie sa znajdowane przy ZADNEJ ufnosci \u2014 zadne strojenie progu ich nie odzyska."
+    },
+    "note": "Progi dobrane na zbiorze TESTOWYM \u2014 to gorne ograniczenia, bo wybrane na tych samych danych, na ktorych mierzone. Do wdrozenia prog dobiera sie na walidacji. Dopasowanie BEZ rozroznienia klas, wiec ta diagnostyka wazy obiektami, podczas gdy mAP wazy klasami \u2014 przy 85% udziale klasy human obie moga dac inna kolejnosc modeli i obie sa poprawne."
+  },
+  "categories": "2categories",
+  "speed": null,
+  "model": "yolo11m",
+  "framework": "ultralytics",
+  "params_M": 20.05,
+  "gflops": 274.7,
+  "train": {
+    "epochs_budget": 100,
+    "patience": 20,
+    "batch": 4,
+    "seed": 0,
+    "hours": 10.401,
+    "peak_vram_GB": 8.78,
+    "gpu": "NVIDIA GeForce RTX 4090 Laptop GPU"
+  },
+  "weights_hf": "jgasienica/afo-yolo11m-1280-2cat"
+}

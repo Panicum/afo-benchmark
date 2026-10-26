@@ -23,6 +23,7 @@ from pathlib import Path
 
 import yaml
 
+from afo.coco import CATEGORY_ID_OFFSET
 from afo.download import dataset_root
 from afo.vram import DEFAULT_LIMIT_FRAC, check_peak, reset_peak, sysmem_fallback_active
 
@@ -45,7 +46,8 @@ def git_rev() -> str:
         return "unknown"
 
 
-def build_predictions(model, files, id_of, out_path: Path, threshold: float) -> Path:
+def build_predictions(model, files, id_of, out_path: Path, threshold: float,
+                      valid_ids: set[int]) -> Path:
     """Predykcje w formacie COCO detection results, w ukladzie wspolrzednych GT."""
     import numpy as np
     from PIL import Image
@@ -53,6 +55,7 @@ def build_predictions(model, files, id_of, out_path: Path, threshold: float) -> 
 
     results = []
     seen_class_ids: set[int] = set()
+    dropped: dict[int, int] = {}
     for p in tqdm(files, desc="predict", unit="img"):
         img_id, gt_w, gt_h = id_of[p.name]
         with Image.open(p) as im:
@@ -68,10 +71,20 @@ def build_predictions(model, files, id_of, out_path: Path, threshold: float) -> 
         order = np.argsort(-conf)[:MAX_DET]
         for i in order:
             x1, y1, x2, y2 = xyxy[i]
-            seen_class_ids.add(int(cls[i]))
+            raw = int(cls[i])
+            seen_class_ids.add(raw)
+            # RF-DETR indeksuje klasy OD ZERA, a COCO od jedynki — ustalone
+            # empirycznie: przy progu 0,25 rozklad klas 0..5 pokrywa sie z
+            # rozkladem GT co do dziesiatych procenta (85,1% vs 85,2% dla
+            # human). Model zwraca tez sporadyczna klase o indeksie
+            # len(classes), ktora nie odpowiada niczemu i ma znikome score.
+            cat = raw + CATEGORY_ID_OFFSET
+            if cat not in valid_ids:
+                dropped[raw] = dropped.get(raw, 0) + 1
+                continue
             results.append({
                 "image_id": img_id,
-                "category_id": int(cls[i]),
+                "category_id": cat,
                 "bbox": [round(float(x1) * sx, 2), round(float(y1) * sy, 2),
                          round(float(x2 - x1) * sx, 2), round(float(y2 - y1) * sy, 2)],
                 "score": round(float(conf[i]), 5),
@@ -79,7 +92,12 @@ def build_predictions(model, files, id_of, out_path: Path, threshold: float) -> 
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(results), encoding="utf-8")
-    print(f"[predict] {len(results)} detekcji, class_id w predykcjach: {sorted(seen_class_ids)}")
+    print(f"[predict] {len(results)} detekcji, surowe class_id modelu: "
+          f"{sorted(seen_class_ids)} -> category_id +{CATEGORY_ID_OFFSET}")
+    if dropped:
+        n = sum(dropped.values())
+        print(f"[predict] odrzucono {n} detekcji o class_id poza zakresem: "
+              f"{ {k: v for k, v in sorted(dropped.items())} }")
     return out_path
 
 
@@ -98,6 +116,11 @@ def main() -> None:
     ap.add_argument("--results-dir", default="results")
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--post-only", action="store_true")
+    ap.add_argument(
+        "--train-hours", type=float, default=None,
+        help="rzeczywisty czas treningu przy --post-only; bez tego zapisze sie null, "
+             "a zerowy czas wygladalby jak darmowy trening",
+    )
     args = ap.parse_args()
 
     import torch
@@ -146,7 +169,7 @@ def main() -> None:
 
     cls = getattr(rfdetr, SIZES[args.size])
 
-    train_s = None
+    train_s = args.train_hours * 3600 if args.train_hours else None
     if not args.post_only:
         reset_peak()
         t0 = time.perf_counter()
@@ -186,7 +209,7 @@ def main() -> None:
     infer = cls(pretrain_weights=str(best), resolution=args.imgsz,
                 num_classes=len(expected_ids))
     pred_path = build_predictions(infer, files, id_of, out_dir / "predictions_test.json",
-                                  CONF_THRESHOLD)
+                                  CONF_THRESHOLD, expected_ids)
 
     dets = json.loads(pred_path.read_text(encoding="utf-8"))
     got = {d["category_id"] for d in dets}

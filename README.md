@@ -229,6 +229,7 @@ python scripts/train_ultralytics.py --model yolo11n --imgsz 640 --categories 2ca
 | RetinaNet (R50) | paper 2021 | 1333 | 34.93 | 79.82 | 69.31 | 90.31 | — |
 | RetinaNet (R101) | paper 2021 | 1333 | 35.83 | 79.36 | 65.00 | 93.71 | — |
 | Faster R-CNN (R101-FPN) | paper 2021 | 1333 | 36.25 | 78.97 | 64.11 | 93.82 | — |
+| `yolo11m` @1280 | **this repo** | 1280 | **36.29** | **77.72** | 62.15 | 93.29 | [HF](https://huggingface.co/jgasienica/afo-yolo11m-1280-2cat) |
 | Ensemble 3 (best AP@50) | paper 2021 | 1333 | 37.20 | 82.16 | 70.31 | 94.00 | — |
 | Ensemble 4 (paper's contribution) | paper 2021 | 1333 | 37.71 | 81.55 | 68.39 | 94.71 | — |
 

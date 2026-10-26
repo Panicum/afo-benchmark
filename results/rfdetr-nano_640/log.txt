@@ -1,0 +1,51 @@
+=== rfdetr-nano_640 ===
+GPU: NVIDIA GeForce RTX 4090 Laptop GPU
+sysmem fallback sterownika: True
+dane: C:\Users\Jan\.cache\afo\rfdetr_yolo1280
+batch 8 x grad_accum 2 = efektywny 16
+
+checkpoint: checkpoint_best_ema.pth
+[predict] 154008 detekcji, surowe class_id modelu: [0, 1, 2, 3, 4, 5, 6] -> category_id +1
+[predict] odrzucono 192 detekcji o class_id poza zakresem: {6: 192}
+
+=== AFO test — predictions_test.json (imgsz=640) ===
+obrazow 514, obiektow GT 7639, detekcji 154008
+
+mAP50-95 0.3937   mAP50 0.7334   (maxDets=300; przy 100: 0.3934)
+
+AP na klase (AP50-95 / AP50, n obiektow GT):
+  human            0.2317  0.6894   n= 6511
+  wind/sup-board   0.5370  0.9653   n=  634
+  boat             0.4430  0.6986   n=  143
+  bouy             0.0879  0.2600   n=   59
+  sailboat         0.5504  0.8511   n=   28
+  kayak            0.5120  0.9359   n=  264
+
+Kubelki AFO (stala skala referencyjna: dluzszy bok 640 px):
+  tiny     AP50-95 0.2662   n= 4424
+  small    AP50-95 0.3478   n= 2930
+  medium   AP50-95 0.5620   n=  285
+  large    AP50-95    —     n=    0
+  Skala stala — porownywalne miedzy biegami o roznym imgsz.
+
+Standardowe COCO (piksele oryginalu, dla porownania z innymi pracami):
+  AP-S  0.0092
+  AP-M  0.2440
+  AP-L  0.5026
+
+Punkt pracy (prog maksymalizujacy F1, IoU 0,5, bez rozroznienia klas):
+  prog ufnosci  0.410
+  precyzja 0.7773   recall 0.7451   F1 0.7609
+  falszywych alarmow na obraz: 3.17   przeoczen na obraz: 3.79
+  przy recall 80%: prog 0.10, precyzja 0.620, FP na obraz 7.29
+  przy recall 90%: NIEOSIAGALNE (max recall 0.868)
+
+=== Wersja DWUKLASOWA (definicja klas jak w Tabeli 2 pracy) ===
+AP (50-95) 0.3844   AP@50 0.8230
+  small_obj  AP50-95 0.2302  AP@50 0.6859  n=6570
+  large_obj  AP50-95 0.5387  AP@50 0.9601  n=1069
+  Model uczony na 6 klasach, predykcje scalone po fakcie — nie to samo, co trening na wersji dwuklasowej.
+
+[fps] pominiete — zmierz osobnym przebiegiem po cool-downie
+
+Zapisano C:\Users\Jan\Projects\afoDataset\results\rfdetr-nano_640
