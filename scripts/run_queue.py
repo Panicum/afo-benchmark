@@ -195,14 +195,15 @@ def main() -> None:
             )
             continue
 
-        if j.model == "__best_yolo__":
-            pick = best_yolo(results_dir, j.categories)
+        if j.model in ("__best_yolo__", "__best_rfdetr__"):
+            fw = "ultralytics" if j.model == "__best_yolo__" else "rfdetr"
+            pick = best_of(results_dir, j.categories, fw)
             if not pick:
-                print(f"\n[queue] brak ukonczonych YOLO @640 dla {j.categories} — "
-                      f"pomijam bieg @1280")
+                print(f"\n[queue] brak ukonczonych biegow {fw} @640 dla "
+                      f"{j.categories} — pomijam bieg @1280")
                 continue
             j = Job(pick, j.imgsz, j.categories, j.framework, j.est_h)
-            print(f"\n[queue] najlepszy YOLO @640 ({j.categories}) = {pick}")
+            print(f"\n[queue] najlepszy {fw} @640 ({j.categories}) = {pick}")
 
         name = j.run_name
         if done(results_dir, name):
