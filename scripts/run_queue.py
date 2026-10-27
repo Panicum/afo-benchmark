@@ -116,9 +116,11 @@ def default_plan() -> list[Job]:
     # 1280 dla najlepszego RF-DETR, jak dla YOLO (§2)
     jobs.append(Job("__best_rfdetr__", 1280, "6categories", "rfdetr", est_h=14.0))
     jobs.append(Job("__best_rfdetr__", 1280, "2categories", "rfdetr", est_h=14.0))
-    # RT-DETR-l — w tabeli modeli oznaczony jako opcjonalny
-    jobs.append(Job("rtdetr-l", 640, "6categories", est_h=4.0))
-    jobs.append(Job("rtdetr-l", 640, "2categories", est_h=4.0))
+    # RT-DETR-l — w tabeli modeli oznaczony jako opcjonalny.
+    # ZMIERZONE czesciowo: bieg przerwany na 88. epoce po 4,7 h, czyli ~5,3 h
+    # na pelne sto. Z zapasem 5,5.
+    jobs.append(Job("rtdetr-l", 640, "6categories", est_h=5.5))
+    jobs.append(Job("rtdetr-l", 640, "2categories", est_h=5.5))
     return jobs
 
 

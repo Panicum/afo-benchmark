@@ -3,7 +3,10 @@
     "allow": [
       "Bash(powershell -NoProfile -Command 'Get-CimInstance Win32_Process -Filter \"Name='\\\\''python.exe'\\\\''\" | Where-Object { $_.CommandLine -like '\\\\''*train_*'\\\\'' -or $_.CommandLine -like '\\\\''*run_queue*'\\\\'' } | Select-Object ProcessId, @{n='\\\\''Cmd'\\\\'';e={$_.CommandLine.Substring\\(0,[Math]::Min\\(70,$_.CommandLine.Length\\)\\)}} | Format-Table -AutoSize')",
       "Bash(powershell -NoProfile -Command '$s=New-Object -ComObject Shell.Application; $s.Namespace\\(10\\).Items\\(\\) | Where-Object { $_.Name -like '\\\\''*rtdetr*'\\\\'' -or $_.Name -like '\\\\''*best*'\\\\'' } | Select-Object -First 5 Name, Path')",
-      "Bash(COMMIT_QUIZ_SKIP=1 git -c user.email=j.gasienica@myled.pl -c 'user.name=Jan Gasienica-Jozkowy' commit -q -m 'Add recover_run.py; never delete weights after an interruption *)"
+      "Bash(COMMIT_QUIZ_SKIP=1 git -c user.email=j.gasienica@myled.pl -c 'user.name=Jan Gasienica-Jozkowy' commit -q -m 'Add recover_run.py; never delete weights after an interruption *)",
+      "Bash(PYTHONIOENCODING=utf-8 ./.venv/Scripts/python.exe scripts/run_queue.py --only __nic__)",
+      "Bash(COMMIT_QUIZ_SKIP=1 git -c user.email=j.gasienica@myled.pl -c 'user.name=Jan Gasienica-Jozkowy' commit -q -m 'run_queue: rtdetr-l estimate from the partial measurement *)",
+      "Bash(PYTHONIOENCODING=utf-8 ./.venv/Scripts/python.exe -u scripts/run_queue.py)"
     ]
   }
 }
