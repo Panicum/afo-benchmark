@@ -1,0 +1,233 @@
+{
+  "gt_json": "<AFO_ROOT>/coco/test.json",
+  "dt_json": "results/rfdetr-small_640/predictions_test.json",
+  "imgsz": 640,
+  "n_images": 514,
+  "n_gt_objects": 7639,
+  "n_detections": 153896,
+  "max_dets_primary": 300,
+  "class_names": [
+    "human",
+    "wind/sup-board",
+    "boat",
+    "bouy",
+    "sailboat",
+    "kayak"
+  ],
+  "mAP50_95": 0.3583795838739199,
+  "mAP50": 0.6625280386487123,
+  "mAP50_95_maxdets100": 0.3581175680815095,
+  "AP_S_coco": 0.008339703481040135,
+  "AP_M_coco": 0.19377878900435577,
+  "AP_L_coco": 0.4738234384580398,
+  "per_class": {
+    "human": {
+      "AP50_95": 0.2244171710637818,
+      "AP50": 0.68070213969559,
+      "n_gt": 6511
+    },
+    "wind/sup-board": {
+      "AP50_95": 0.505635058611418,
+      "AP50": 0.9128155927053122,
+      "n_gt": 634
+    },
+    "boat": {
+      "AP50_95": 0.40381198615418573,
+      "AP50": 0.6125077884625499,
+      "n_gt": 143
+    },
+    "bouy": {
+      "AP50_95": 0.0722842587581924,
+      "AP50": 0.23490165967061102,
+      "n_gt": 59
+    },
+    "sailboat": {
+      "AP50_95": 0.4789863162213803,
+      "AP50": 0.6794038065504939,
+      "n_gt": 28
+    },
+    "kayak": {
+      "AP50_95": 0.4651427124345612,
+      "AP50": 0.8548372448077172,
+      "n_gt": 264
+    }
+  },
+  "afo_buckets": {
+    "tiny": {
+      "AP50_95": 0.21471868474102002,
+      "AP50": 0.4780087595818565,
+      "n_gt": 4424
+    },
+    "small": {
+      "AP50_95": 0.3275517880376386,
+      "AP50": 0.6369730746186042,
+      "n_gt": 2930
+    },
+    "medium": {
+      "AP50_95": 0.5347737106689014,
+      "AP50": 0.8323911588084428,
+      "n_gt": 285
+    },
+    "large": {
+      "AP50_95": NaN,
+      "AP50": NaN,
+      "n_gt": 0
+    }
+  },
+  "afo_buckets_reference_side": 640,
+  "afo_buckets_note": "Pola mierzone po przeskalowaniu kazdego obrazu do dluzszego boku 640 px. Skala jest stala i niezalezna od imgsz, wiec kubelki opisuja te sama populacje obiektow we wszystkich biegach i SA porownywalne miedzy 640 a 1280.",
+  "operating_point": {
+    "threshold": 0.5,
+    "precision": 0.7781155015197568,
+    "recall": 0.737269276083257,
+    "f1": 0.7571418968878135,
+    "tp": 5632,
+    "fp": 1606,
+    "fn": 2007,
+    "fp_per_image": 3.124513618677043,
+    "fn_per_image": 3.904669260700389,
+    "n_images": 514,
+    "n_gt_objects": 7639,
+    "iou_threshold": 0.5,
+    "class_agnostic": true,
+    "at_recall": {
+      "r80": {
+        "threshold": 0.04,
+        "precision": 0.4162385073012439,
+        "recall": 0.8059955491556486,
+        "f1": 0.5489724042619589,
+        "tp": 6157,
+        "fp": 8635,
+        "fn": 1482,
+        "fp_per_image": 16.799610894941633,
+        "fn_per_image": 2.8832684824902723
+      },
+      "r90": {
+        "reachable": false,
+        "max_recall": 0.85862023825108,
+        "note": "model nie osiaga recallu 0.9 przy zadnym progu"
+      }
+    },
+    "recall_ceiling": {
+      "recall": 0.85862023825108,
+      "threshold": 0.0,
+      "missed_objects": 1080,
+      "note": "Najwyzszy osiagalny recall, przy progu zbiegajacym do zera. Obiekty ponad ten sufit nie sa znajdowane przy ZADNEJ ufnosci \u2014 zadne strojenie progu ich nie odzyska."
+    },
+    "note": "Progi dobrane na zbiorze TESTOWYM \u2014 to gorne ograniczenia, bo wybrane na tych samych danych, na ktorych mierzone. Do wdrozenia prog dobiera sie na walidacji. Dopasowanie BEZ rozroznienia klas, wiec ta diagnostyka wazy obiektami, podczas gdy mAP wazy klasami \u2014 przy 85% udziale klasy human obie moga dac inna kolejnosc modeli i obie sa poprawne."
+  },
+  "categories": "6categories",
+  "two_category": {
+    "gt_json": "<AFO_ROOT>/coco/test.json (scalone do 2 klas)",
+    "dt_json": "results/rfdetr-small_640/predictions_test.json (scalone do 2 klas)",
+    "imgsz": 640,
+    "n_images": 514,
+    "n_gt_objects": 7639,
+    "n_detections": 153896,
+    "max_dets_primary": 300,
+    "class_names": [
+      "small_obj",
+      "large_obj"
+    ],
+    "mAP50_95": 0.37568915371829825,
+    "mAP50": 0.8091760269895876,
+    "mAP50_95_maxdets100": 0.3748349493511677,
+    "AP_S_coco": 0.008222371270893989,
+    "AP_M_coco": 0.34104339564183894,
+    "AP_L_coco": 0.3942529359851623,
+    "per_class": {
+      "small_obj": {
+        "AP50_95": 0.22291294798898173,
+        "AP50": 0.6768796812033157,
+        "n_gt": 6570
+      },
+      "large_obj": {
+        "AP50_95": 0.5284653594476146,
+        "AP50": 0.9414723727758597,
+        "n_gt": 1069
+      }
+    },
+    "afo_buckets": {
+      "tiny": {
+        "AP50_95": 0.2994699180187046,
+        "AP50": 0.6721962585129329,
+        "n_gt": 4424
+      },
+      "small": {
+        "AP50_95": 0.3871352888094702,
+        "AP50": 0.8433316952588773,
+        "n_gt": 2930
+      },
+      "medium": {
+        "AP50_95": 0.5773782601574625,
+        "AP50": 0.9479610350286074,
+        "n_gt": 285
+      },
+      "large": {
+        "AP50_95": NaN,
+        "AP50": NaN,
+        "n_gt": 0
+      }
+    },
+    "afo_buckets_reference_side": 640,
+    "afo_buckets_note": "Pola mierzone po przeskalowaniu kazdego obrazu do dluzszego boku 640 px. Skala jest stala i niezalezna od imgsz, wiec kubelki opisuja te sama populacje obiektow we wszystkich biegach i SA porownywalne miedzy 640 a 1280.",
+    "operating_point": {
+      "threshold": 0.5,
+      "precision": 0.7781155015197568,
+      "recall": 0.737269276083257,
+      "f1": 0.7571418968878135,
+      "tp": 5632,
+      "fp": 1606,
+      "fn": 2007,
+      "fp_per_image": 3.124513618677043,
+      "fn_per_image": 3.904669260700389,
+      "n_images": 514,
+      "n_gt_objects": 7639,
+      "iou_threshold": 0.5,
+      "class_agnostic": true,
+      "at_recall": {
+        "r80": {
+          "threshold": 0.04,
+          "precision": 0.4162385073012439,
+          "recall": 0.8059955491556486,
+          "f1": 0.5489724042619589,
+          "tp": 6157,
+          "fp": 8635,
+          "fn": 1482,
+          "fp_per_image": 16.799610894941633,
+          "fn_per_image": 2.8832684824902723
+        },
+        "r90": {
+          "reachable": false,
+          "max_recall": 0.85862023825108,
+          "note": "model nie osiaga recallu 0.9 przy zadnym progu"
+        }
+      },
+      "recall_ceiling": {
+        "recall": 0.85862023825108,
+        "threshold": 0.0,
+        "missed_objects": 1080,
+        "note": "Najwyzszy osiagalny recall, przy progu zbiegajacym do zera. Obiekty ponad ten sufit nie sa znajdowane przy ZADNEJ ufnosci \u2014 zadne strojenie progu ich nie odzyska."
+      },
+      "note": "Progi dobrane na zbiorze TESTOWYM \u2014 to gorne ograniczenia, bo wybrane na tych samych danych, na ktorych mierzone. Do wdrozenia prog dobiera sie na walidacji. Dopasowanie BEZ rozroznienia klas, wiec ta diagnostyka wazy obiektami, podczas gdy mAP wazy klasami \u2014 przy 85% udziale klasy human obie moga dac inna kolejnosc modeli i obie sa poprawne."
+    },
+    "categories": "2 (small_obj = human+bouy; large_obj = board/boat/sailboat/kayak)",
+    "caveat": "Model uczony na 6 klasach, predykcje scalone po fakcie \u2014 nie to samo, co trening na wersji dwuklasowej."
+  },
+  "speed": null,
+  "model": "rfdetr-small",
+  "framework": "rfdetr",
+  "params_M": 32.03,
+  "gflops": null,
+  "train": {
+    "epochs_budget": 100,
+    "patience": 20,
+    "batch": 8,
+    "grad_accum_steps": 2,
+    "effective_batch": 16,
+    "seed": 0,
+    "hours": 7.169,
+    "gpu": "NVIDIA GeForce RTX 4090 Laptop GPU"
+  },
+  "weights_hf": "jgasienica/afo-rfdetr-small-640"
+}

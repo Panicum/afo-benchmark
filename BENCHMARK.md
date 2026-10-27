@@ -193,6 +193,10 @@ The order is a scheduling decision and has no effect on any reported number; eve
 
 ## 6. Outputs
 
+**An interrupted run is not a lost run.** Ultralytics writes `best.pt` continuously and RF-DETR writes `checkpoint_best_ema.pth`; either is enough to produce every metric in this protocol without training again. Finish it with `python scripts/recover_run.py --run-all`, which finds runs that have weights but no `metrics.json` and completes them through `--post-only`.
+
+**Never delete `results/_runs/<run>/` to "clean up" after an interruption.** The weights are the only expensive artefact a run produces — everything else is minutes of CPU. This rule is written down because it was learned the hard way: an `rtdetr-l` run stopped at epoch 88 of 100 was deleted as cleanup, discarding 4.7 h of GPU time that `--post-only` would have turned into a finished row in under a minute.
+
 Per run, committed to the repository:
 
 ```

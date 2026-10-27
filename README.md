@@ -167,6 +167,8 @@ AFO ships two label sets, and they are **two different tasks**. This repository 
 
 | model | mAP50 | mAP50-95 | AP-tiny (n=4424) | AP-small (n=2930) | params (M) | FPS | weights |
 |---|---|---|---|---|---|---|---|
+| `rfdetr-nano` | 0.7334 | **0.3937** | 0.2662 | 0.3478 | 30.56 | — | [HF](https://huggingface.co/jgasienica/afo-rfdetr-nano-640) |
+| `rfdetr-small` | 0.6625 | **0.3584** | 0.2147 | 0.3276 | 32.03 | — | [HF](https://huggingface.co/jgasienica/afo-rfdetr-small-640) |
 | `yolov8m` | 0.6442 | **0.3324** | 0.2450 | 0.3043 | 25.86 | — | [HF](https://huggingface.co/jgasienica/afo-yolov8m-640) |
 | `yolo11m` | 0.6137 | **0.3170** | 0.2917 | 0.2876 | 20.06 | — | [HF](https://huggingface.co/jgasienica/afo-yolo11m-640) |
 | `yolo11s` | 0.5290 | **0.2737** | 0.2820 | 0.3030 | 9.43 | — | [HF](https://huggingface.co/jgasienica/afo-yolo11s-640) |
