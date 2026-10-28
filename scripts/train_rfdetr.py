@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import json
 import platform
+import re
 import subprocess
 import sys
 import time
@@ -46,8 +47,43 @@ def git_rev() -> str:
         return "unknown"
 
 
+def _predict(model, path: str, threshold: float, state: dict):
+    """predict() z obejsciem niespojnosci rfdetr co do rozdzielczosci.
+
+    RF-DETR base ma patch 14 i 4 okna, czyli blok 56, a ``train`` przyjmuje
+    rozdzielczosc 640, ktora przez 56 sie nie dzieli. ``predict`` to odrzuca,
+    wiec model da sie nauczyc, a potem nie da sie go uzyc. Przy pierwszym takim
+    bledzie wyliczamy najblizszy zgodny ksztalt i trzymamy go dla reszty biegu.
+
+    To ODSTEPSTWO od protokolu: wnioskowanie idzie w innej rozdzielczosci niz
+    trening. Zapisywane w metrics.json jako `inference_shape_override`, zeby
+    wiersz nie udawal porownywalnego z biegami, ktore maja obie te same.
+    """
+    shape = state.get("shape")
+    if shape is not None:
+        return model.predict(path, threshold=threshold, shape=shape)
+    try:
+        return model.predict(path, threshold=threshold)
+    except ValueError as exc:
+        m = re.search(r"block_size=(\d+)", str(exc))
+        if not m:
+            raise
+        block = int(m.group(1))
+        res = state["resolution"]
+        cand = max(block, round(res / block) * block)
+        state["shape"] = (cand, cand)
+        print(
+            f"\n[predict] UWAGA: rozdzielczosc {res} nie dzieli sie przez {block} — "
+            f"biblioteka odmawia wnioskowania. Przechodze na {cand}. Trening byl "
+            f"na {res}, wiec ten wiersz NIE jest wprost porownywalny z biegami, "
+            f"gdzie trening i wnioskowanie maja te sama rozdzielczosc."
+        )
+        return model.predict(path, threshold=threshold, shape=state["shape"])
+
+
 def build_predictions(model, files, id_of, out_path: Path, threshold: float,
-                      valid_ids: set[int]) -> Path:
+                      valid_ids: set[int], resolution: int,
+                      out_state: dict | None = None) -> Path:
     """Predykcje w formacie COCO detection results, w ukladzie wspolrzednych GT."""
     import numpy as np
     from PIL import Image
@@ -56,13 +92,16 @@ def build_predictions(model, files, id_of, out_path: Path, threshold: float,
     results = []
     seen_class_ids: set[int] = set()
     dropped: dict[int, int] = {}
+    state = out_state if out_state is not None else {}
+    state.setdefault("resolution", resolution)
+    state.setdefault("shape", None)
     for p in tqdm(files, desc="predict", unit="img"):
         img_id, gt_w, gt_h = id_of[p.name]
         with Image.open(p) as im:
             src_w, src_h = im.size
         sx, sy = gt_w / src_w, gt_h / src_h
 
-        det = model.predict(str(p), threshold=threshold)
+        det = _predict(model, str(p), threshold, state)
         if det is None or len(det) == 0:
             continue
         xyxy = np.asarray(det.xyxy)
@@ -206,10 +245,12 @@ def main() -> None:
     if missing:
         raise SystemExit(f"{len(missing)} obrazow spoza test.json: {missing[:5]}")
 
+    pred_state: dict = {}
     infer = cls(pretrain_weights=str(best), resolution=args.imgsz,
                 num_classes=len(expected_ids))
     pred_path = build_predictions(infer, files, id_of, out_dir / "predictions_test.json",
-                                  CONF_THRESHOLD, expected_ids)
+                                  CONF_THRESHOLD, expected_ids, args.imgsz,
+                                  pred_state)
 
     dets = json.loads(pred_path.read_text(encoding="utf-8"))
     got = {d["category_id"] for d in dets}
@@ -239,6 +280,15 @@ def main() -> None:
     n_params = sum(p.numel() for p in infer.model.model.parameters())
     metrics["model"] = model_name
     metrics["framework"] = "rfdetr"
+    if pred_state.get("shape"):
+        metrics["inference_shape_override"] = {
+            "trained_at": args.imgsz,
+            "inferred_at": pred_state["shape"][0],
+            "why": "rfdetr predict() wymaga rozdzielczosci podzielnej przez "
+                   "patch_size*num_windows, czego train() nie egzekwuje",
+            "comparability": "wiersz NIE jest wprost porownywalny z biegami, "
+                             "gdzie trening i wnioskowanie maja te sama rozdzielczosc",
+        }
     metrics["params_M"] = round(n_params / 1e6, 2)
     metrics["gflops"] = None
     metrics["train"] = {
