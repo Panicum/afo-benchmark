@@ -70,15 +70,16 @@ class Job:
         suffix = {"6categories": "", "2categories": "_2cat"}[self.categories]
         return f"{self.model}_{self.imgsz}{suffix}"
 
-    def cmd(self) -> list[str]:
+    def cmd(self, resume: bool = False) -> list[str]:
+        extra = ["--resume"] if resume else []
         if self.framework == "rfdetr":
             size = self.model.split("-", 1)[1]
             return [PY, "-u", "-W", "ignore", "scripts/train_rfdetr.py",
                     "--size", size, "--imgsz", str(self.imgsz),
-                    "--categories", self.categories]
+                    "--categories", self.categories] + extra
         return [PY, "-u", "-W", "ignore", "scripts/train_ultralytics.py",
                 "--model", self.model, "--imgsz", str(self.imgsz),
-                "--categories", self.categories]
+                "--categories", self.categories] + extra
 
 
 # Kolejnosc = priorytet. Najpierw domkniecie obu gallezi YOLO przy 640 (rdzen
@@ -146,6 +147,16 @@ def done(results_dir: Path, run_name: str) -> bool:
     return (results_dir / run_name / "metrics.json").is_file()
 
 
+#: pliki ze STANEM treningu (nie samymi wagami) — po nich poznajemy, ze bieg
+#: da sie wznowic od przerwanej epoki zamiast zaczynac od poczatku
+RESUMABLE = ("weights/last.pt", "last.ckpt")
+
+
+def resumable(results_dir: Path, run_name: str) -> bool:
+    run = results_dir / "_runs" / run_name
+    return any((run / f).is_file() for f in RESUMABLE)
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--results-dir", default="results")
@@ -172,6 +183,9 @@ def main() -> None:
             status = "zaleznie od wynikow @640"
         elif done(results_dir, name):
             status = "GOTOWE — pomijam"
+        elif resumable(results_dir, name):
+            status = "PRZERWANY — wznowie"
+            todo.append(j)
         elif args.only and name not in args.only:
             status = "poza --only"
         else:
@@ -216,7 +230,10 @@ def main() -> None:
         print(f"\n{'='*70}\n[queue {i}/{len(jobs)}] {name}  (po {elapsed:.1f} h)\n{'='*70}",
               flush=True)
         t0 = time.perf_counter()
-        r = subprocess.run(j.cmd(), env=ENV)
+        res = resumable(results_dir, name)
+        if res:
+            print(f"[queue] znaleziono stan przerwanego treningu — wznawiam {name}")
+        r = subprocess.run(j.cmd(resume=res), env=ENV)
         dt = (time.perf_counter() - t0) / 3600
         if r.returncode != 0 or not done(results_dir, name):
             print(f"[queue] !!! {name} nie zakonczyl sie poprawnie (kod {r.returncode}, "

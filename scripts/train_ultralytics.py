@@ -103,6 +103,10 @@ def main() -> None:
     ap.add_argument("--results-dir", default="results")
     ap.add_argument("--workers", type=int, default=8)
     ap.add_argument(
+        "--resume", action="store_true",
+        help="wznow przerwany trening z last.pt zamiast zaczynac od zera",
+    )
+    ap.add_argument(
         "--post-only", action="store_true",
         help="pomin trening, policz predykcje/metryki/FPS z istniejacego best.pt",
     )
@@ -168,13 +172,24 @@ def main() -> None:
     else:
         reset_peak()
         t0 = time.perf_counter()
-        model = YOLO(f"{args.model}.pt")
-        model.train(
-            data=data, epochs=args.epochs, imgsz=args.imgsz, batch=batch, device=0,
-            workers=args.workers, seed=args.seed, patience=args.patience,
-            val=True, plots=True, save=True, exist_ok=True, deterministic=True,
-            project=str(runs_root), name=run_name,
-        )
+        last = runs_root / run_name / "weights" / "last.pt"
+        if args.resume and last.is_file():
+            # Ultralytics odtwarza konfiguracje z checkpointu, wiec NIE podajemy
+            # jej ponownie — inaczej czesc argumentow bylaby ignorowana po cichu,
+            # a czesc nie, i bieg przestalby odpowiadac zapisanej konfiguracji.
+            print(f"wznawiam z {last}")
+            model = YOLO(str(last))
+            model.train(resume=True)
+        else:
+            if args.resume:
+                print(f"--resume podane, ale brak {last} — zaczynam od zera")
+            model = YOLO(f"{args.model}.pt")
+            model.train(
+                data=data, epochs=args.epochs, imgsz=args.imgsz, batch=batch, device=0,
+                workers=args.workers, seed=args.seed, patience=args.patience,
+                val=True, plots=True, save=True, exist_ok=True, deterministic=True,
+                project=str(runs_root), name=run_name,
+            )
         train_s = time.perf_counter() - t0
         c = check_peak(args.limit_frac)
         print(f"\ntrening: {train_s/3600:.2f} h | {c}")

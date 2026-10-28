@@ -8,7 +8,8 @@
       "Bash(COMMIT_QUIZ_SKIP=1 git -c user.email=j.gasienica@myled.pl -c 'user.name=Jan Gasienica-Jozkowy' commit -q -m 'run_queue: rtdetr-l estimate from the partial measurement *)",
       "Bash(PYTHONIOENCODING=utf-8 ./.venv/Scripts/python.exe -u scripts/run_queue.py)",
       "Bash(PYTHONIOENCODING=utf-8 ./.venv/Scripts/python.exe scripts/train_rfdetr.py --help)",
-      "Bash(COMMIT_QUIZ_SKIP=1 git -c user.email=j.gasienica@myled.pl -c 'user.name=Jan Gasienica-Jozkowy' commit -q -m 'train_rfdetr: survive the library'\\\\''s resolution inconsistency *)"
+      "Bash(COMMIT_QUIZ_SKIP=1 git -c user.email=j.gasienica@myled.pl -c 'user.name=Jan Gasienica-Jozkowy' commit -q -m 'train_rfdetr: survive the library'\\\\''s resolution inconsistency *)",
+      "Bash(awk '{print \"  \"$9\"  \"int\\($5/1048576\\)\" MB\"}')"
     ]
   }
 }

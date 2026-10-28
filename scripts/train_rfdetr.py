@@ -154,6 +154,10 @@ def main() -> None:
     )
     ap.add_argument("--results-dir", default="results")
     ap.add_argument("--workers", type=int, default=4)
+    ap.add_argument(
+        "--resume", action="store_true",
+        help="wznow przerwany trening z last.ckpt zamiast zaczynac od zera",
+    )
     ap.add_argument("--post-only", action="store_true")
     ap.add_argument(
         "--train-hours", type=float, default=None,
@@ -213,11 +217,19 @@ def main() -> None:
         reset_peak()
         t0 = time.perf_counter()
         model = cls(resolution=args.imgsz)
+        # last.ckpt niesie pelny stan treningu (wagi, optymalizator, licznik
+        # epok), wiec wznowienie kontynuuje budzet epok zamiast go resetowac.
+        last = run_dir / "last.ckpt"
+        resume_from = str(last) if (args.resume and last.is_file()) else None
+        if args.resume and not resume_from:
+            print(f"--resume podane, ale brak {last} — zaczynam od zera")
+        elif resume_from:
+            print(f"wznawiam z {last}")
         model.train(
             dataset_dir=str(data_dir), epochs=args.epochs, batch_size=batch,
             grad_accum_steps=accum, output_dir=str(run_dir), num_workers=args.workers,
             early_stopping=True, early_stopping_patience=args.patience,
-            tensorboard=False, wandb=False,
+            tensorboard=False, wandb=False, resume=resume_from,
         )
         train_s = time.perf_counter() - t0
         c = check_peak(args.limit_frac)
