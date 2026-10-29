@@ -32,15 +32,16 @@ def _percentiles(xs: list[float]) -> dict[str, float]:
 #: Ile razy powtorzyc caly przebieg; raportujemy mediane plus zakres.
 DEFAULT_REPEATS = 4
 
-#: Temperatura GPU, ponizej ktorej uznajemy karte za wychlodzona.
+#: Prog wczesnego wyjscia z cool-downu. Nie jest wymaganiem — patrz
+#: ``wait_for_cooldown``, ktore czeka na USTABILIZOWANIE temperatury, bo ta
+#: karta spoczywa na ~70 stopniach i bezwzgledny prog 50 byl nieosiagalny.
 #:
-#: To NIE jest kwestia rozgrzewki, tylko throttlingu. Te same wagi dawaly
-#: 43,8 FPS tuz po 45-minutowym treningu i 76,2 FPS na zimnej karcie — bo
-#: gorace GPU laptopa obniza zegary. Odrzucenie pierwszego przebiegu tego nie
-#: leczy, skoro kolejne tez sa gorace. Jedyne uczciwe wyjscie to zmierzyc po
-#: wychlodzeniu i zapisac temperature oraz zegar OBOK wyniku.
+#: Cool-down w ogole istnieje dlatego, ze to throttling, nie rozgrzewka: te
+#: same wagi dawaly 43,8 FPS tuz po 45-minutowym treningu i 76,2 FPS na zimnej
+#: karcie. Chodzi o to, by kazdy pomiar startowal w tym samym stanie cieplnym,
+#: a temperatura i zegar byly zapisane OBOK wyniku.
 COOLDOWN_TEMP_C = 50
-COOLDOWN_MAX_WAIT_S = 900
+COOLDOWN_MAX_WAIT_S = 240
 COOLDOWN_POLL_S = 15
 
 
@@ -61,32 +62,62 @@ def gpu_state() -> dict[str, float | None]:
         return {"temp_c": None, "clock_sm_mhz": None, "power_w": None}
 
 
+#: O ile stopni temperatura moze sie wahac, zebysmy uznali ja za ustabilizowana
+PLATEAU_TOLERANCE_C = 2.0
+PLATEAU_SAMPLES = 3
+
+
 def wait_for_cooldown(
     target_c: float = COOLDOWN_TEMP_C,
     max_wait_s: int = COOLDOWN_MAX_WAIT_S,
     poll_s: int = COOLDOWN_POLL_S,
 ) -> dict:
-    """Czeka, az GPU zejdzie ponizej ``target_c``. Zwraca, co zastal."""
+    """Czeka, az temperatura GPU przestanie spadac. Zwraca, co zastal.
+
+    NIE czeka na bezwzgledny prog. Ten laptop spoczywa na 70-73 stopniach, wiec
+    cel 50 byl nieosiagalny i kazdy model marnowalby pelny limit czekania, zeby
+    i tak zmierzyc przy tej samej temperaturze. Liczy sie to, zeby wszystkie
+    pomiary zaczynaly sie w tym samym, ustabilizowanym stanie — a nie to, jaka
+    liczba na nim wypada. ``target_c`` dziala jako wczesne wyjscie, gdyby karta
+    chlodzila sie ponizej niego.
+    """
     t0 = time.perf_counter()
     st = gpu_state()
     if st["temp_c"] is None:
         print("[fps] nie udalo sie odczytac temperatury — pomijam cool-down")
-        return {"waited_s": 0, "reached": None, **st}
+        return {"waited_s": 0, "settled": None, **st}
+
     start_temp = st["temp_c"]
-    while st["temp_c"] is not None and st["temp_c"] > target_c:
+    hist: list[float] = [st["temp_c"]]
+    settled = False
+    while True:
         waited = time.perf_counter() - t0
-        if waited > max_wait_s:
-            print(f"[fps] cool-down przerwany po {waited/60:.1f} min — "
-                  f"{st['temp_c']:.0f} °C, cel {target_c} °C. Wynik bedzie zanizony.")
+        if st["temp_c"] is not None and st["temp_c"] <= target_c:
+            settled = True
             break
-        print(f"[fps] cool-down: {st['temp_c']:.0f} °C > {target_c} °C, "
-              f"czekam ({waited/60:.1f} min)...", flush=True)
+        if len(hist) >= PLATEAU_SAMPLES:
+            window = hist[-PLATEAU_SAMPLES:]
+            if max(window) - min(window) <= PLATEAU_TOLERANCE_C:
+                settled = True
+                break
+        if waited > max_wait_s:
+            print(f"[fps] cool-down przerwany po {waited/60:.1f} min przy "
+                  f"{st['temp_c']:.0f} °C — temperatura nadal sie zmienia.")
+            break
+        print(f"[fps] cool-down: {st['temp_c']:.0f} °C, czekam na ustabilizowanie "
+              f"({waited/60:.1f} min)...", flush=True)
         time.sleep(poll_s)
         st = gpu_state()
+        if st["temp_c"] is not None:
+            hist.append(st["temp_c"])
+
     waited = time.perf_counter() - t0
     print(f"[fps] start pomiaru przy {st['temp_c']:.0f} °C, "
-          f"zegar {st['clock_sm_mhz']:.0f} MHz (czekano {waited/60:.1f} min)")
-    return {"waited_s": round(waited, 1), "start_temp_c": start_temp, "reached": True, **st}
+          f"zegar {st['clock_sm_mhz']:.0f} MHz "
+          f"({'ustabilizowana' if settled else 'NIEUSTABILIZOWANA'}, "
+          f"czekano {waited/60:.1f} min)")
+    return {"waited_s": round(waited, 1), "start_temp_c": start_temp,
+            "settled": settled, **st}
 
 
 def measure_fps(

@@ -91,9 +91,9 @@ def build_six_class(rows: list[dict]) -> str:
         out.append(f"\n**imgsz = {imgsz}**\n")
         out.append(
             f"| model | mAP50 | mAP50-95 | AP-tiny (n={n_tiny or '?'}) | "
-            f"AP-small (n={n_small or '?'}) | params (M) | FPS | weights |"
+            f"AP-small (n={n_small or '?'}) | params (M) | weights |"
         )
-        out.append("|---|---|---|---|---|---|---|---|")
+        out.append("|---|---|---|---|---|---|---|")
         for r in group:
             b = r.get("afo_buckets") or {}
             out.append(
@@ -101,7 +101,7 @@ def build_six_class(rows: list[dict]) -> str:
                 f"**{fmt(r.get('mAP50_95'))}** | "
                 f"{fmt(b.get('tiny',{}).get('AP50_95'))} | "
                 f"{fmt(b.get('small',{}).get('AP50_95'))} | "
-                f"{fmt(r.get('params_M'), 2)} | {fmt(_fps_of(r), 1)} | {_weights_link(r)} |"
+                f"{fmt(r.get('params_M'), 2)} | {_weights_link(r)} |"
             )
 
     out.append(
@@ -109,11 +109,10 @@ def build_six_class(rows: list[dict]) -> str:
         "image rescaled to a 640 px longest side, independent of the training resolution — "
         "so AP-tiny means the same population of objects in every row and 640 is directly "
         "comparable with 1280. One run per model, no seed-variance estimate: treat gaps "
-        "under ~1 point as noise. FPS: batch 1, FP16, RTX 4090 **Laptop** GPU, measured in "
-        "a separate pass after a thermal cool-down with the temperature recorded alongside. "
-        "mAP does penalise false alarms on water; for the operating-point view (F1-optimal "
-        "threshold, false alarms per image) read `operating_point` in each `metrics.json` — "
-        "see [BENCHMARK.md](BENCHMARK.md)."
+        "under ~1 point as noise. Inference speed is not benchmarked: the only available GPU is "
+        "a shared laptop, where repeated measurements of the same weights varied by up to 55%. "
+        "Per-run diagnostics beyond mAP are in `operating_point` in each `metrics.json` — see "
+        "[BENCHMARK.md](BENCHMARK.md)."
     )
     return "\n".join(out)
 

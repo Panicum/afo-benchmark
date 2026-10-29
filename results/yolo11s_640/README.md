@@ -87,7 +87,7 @@ python scripts/train_ultralytics.py --model yolo11s --imgsz 640
 
 ## Speed
 
-_Not measured._
+_Not benchmarked._ The only GPU available was a shared laptop, where repeated measurements of the same weights varied by up to 55% with thermal state. No number is published rather than a bad one.
 
 ## Usage
 

@@ -166,7 +166,9 @@ def build_card(metrics: dict) -> str:
             f"an absolute capability claim."
         )
     else:
-        speed_block = "_Not measured._"
+        speed_block = ("_Not benchmarked._ The only GPU available was a shared laptop, "
+                       "where repeated measurements of the same weights varied by up to "
+                       "55% with thermal state. No number is published rather than a bad one.")
 
     t = metrics.get("train", {})
     return TEMPLATE.format(

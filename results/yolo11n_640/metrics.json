@@ -216,6 +216,5 @@
     "peak_vram_GB": null,
     "gpu": "NVIDIA GeForce RTX 4090 Laptop GPU"
   },
-  "weights_hf": "jgasienica/afo-yolo11n-640",
-  "speed_note": "poprzedni pomiar odrzucony: zrobiony przed zmiana protokolu, bez cool-downu i bez zapisu temperatury. Do uzupelnienia przez scripts/benchmark_fps.py --all"
+  "weights_hf": "jgasienica/afo-yolo11n-640"
 }

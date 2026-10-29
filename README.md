@@ -87,11 +87,7 @@ The split is far more even **by object** (67.4 / 13.5 / 19.1) than **by image** 
 | val | 8 | 2.4% |
 | test | **0** | **0.0%** |
 
-A quarter of the training set is background and the test set contains none. Training therefore sees substantial negative supervision for free.
-
-**This does not mean false alarms go unmeasured.** This is detection, not classification: a detection that matches no ground-truth box lowers precision whether or not the frame contains other objects, and with a median object covering 0.085% of the frame, essentially all of the test set *is* open water. mAP penalises a detector that fires on wave crests exactly as it should.
-
-What the missing background frames do cost is narrower: the operational figure "false alarms per patrol frame on a frame with nothing in it" is not measured directly. It is, however, estimable from the annotated frames, and the benchmark reports it — see the operating-point diagnostic below.
+A quarter of the training set is background, so training gets substantial negative supervision for free. False alarms are still penalised on the test split — any detection not matching a box lowers precision, and with a median object at 0.085% of the frame the test set is overwhelmingly open water by area. What is not directly measured is false alarms per *empty* patrol frame; the benchmark estimates it from the annotated ones instead.
 
 Object counts per image run from 0 to 94; 304 images hold 40 or more.
 
@@ -107,14 +103,7 @@ AFO objects are small **relative to the frame**, not small in absolute pixels. T
 
 ![The same four size buckets counted three ways: in native pixels almost everything is medium or large, at imgsz 640 62% is tiny, at imgsz 1280 54% is small](docs/figures/object-size.png)
 
-| bucket | √area | native pixels | at `imgsz=640` | at `imgsz=1280` |
-|--------|-------|---------------|----------------|-----------------|
-| tiny | < 16² | 15 (0.04%) | 24,951 (62.4%) | 3,320 (8.3%) |
-| small | 16²–32² | 509 (1.27%) | 12,917 (32.3%) | 21,631 (54.1%) |
-| medium | 32²–96² | 25,533 (63.9%) | 2,075 (5.2%) | 14,795 (37.0%) |
-| large | > 96² | 13,934 (34.8%) | 48 (0.12%) | 245 (0.6%) |
-
-Measured in native pixels, 98.7% of objects fall in medium+large and the `tiny` bucket holds **15 objects in the entire dataset** — all of them in test. An AP-tiny column computed that way is noise, not a measurement.
+In native pixels 98.7% of objects land in medium+large and the `tiny` bucket holds **15 objects in the whole dataset** — an AP-tiny column computed that way would be noise.
 
 The benchmark therefore buckets objects at a **fixed reference scale** — every image rescaled to a 640 px longest side — which is why 62% of objects land in `tiny`. The scale is deliberately *not* the model's own input resolution: if it were, an object would be `tiny` at 640 and `small` at 1280, and the two runs could not be compared — which would defeat the purpose of running both. See [BENCHMARK.md](BENCHMARK.md) §4.
 
@@ -129,24 +118,8 @@ These are verified properties of the dataset **as released**. They are documente
 - **3,641 images, not 3,647.** The paper reports 3,647; six images were never released. Every published count in this repository is computed from the files, not copied from the paper.
 - **29 label lines have a coordinate outside `[0, 1]`.** Slightly-off hand annotations at frame edges. **Recommendation: clip on load.** `AFODataset(..., clip=True)` is the default and does exactly that, reporting the count; `clip=False` returns the raw values. The files on disk are never rewritten.
 - **Class 3 is spelled `bouy` in `6categories.names`.** A typo in the original release. The loader reads the file verbatim so class indices stay correct; only display is corrected.
-- **11 pairs of byte-identical images; 7 of those pairs straddle a split boundary.** All 11 are consecutive `_0`/`_1` frames — the first two frames of a sequence, duplicated at capture:
-
-  | pair | splits | |
-  |------|--------|---|
-  | `e_0.jpg` / `e_1.jpg` | val / train | leak |
-  | `i1_0.jpg` / `i1_1.jpg` | val / train | leak |
-  | `k1_0.jpg` / `k1_1.jpg` | val / train | leak |
-  | `r2_0.jpg` / `r2_1.jpg` | val / train | leak |
-  | `r4_0.jpg` / `r4_1.jpg` | val / test | leak |
-  | `w1_0.jpg` / `w1_1.jpg` | val / train | leak |
-  | `z2_0.jpg` / `z2_1.jpg` | val / train | leak |
-  | `k5_0.jpg` / `k5_1.jpg` | test / test | within split |
-  | `s1_0.jpg` / `s1_1.jpg`, `s2_*`, `s5_*` | train / train | within split |
-
-  Six of the seven leaks are val↔train, which inflates val slightly but does not touch the reported numbers; **one, `r4_0`/`r4_1`, is val↔test**, so a single test image has a byte-identical twin in val. That is 1 image of 514 (0.19% of test) and it is the only leak that can affect a reported score. **Recommendation: keep the official splits** and treat this as a documented constant — a private "clean" split makes your numbers incomparable to everyone else's. A de-duplicated variant is future work in [BENCHMARK.md](BENCHMARK.md).
+- **11 pairs of byte-identical images**, all consecutive `_0`/`_1` frames duplicated at capture. Seven straddle a split boundary, and **one of those is val↔test** (`r4_0.jpg` / `r4_1.jpg`) — a single test image of 514 has a twin in val, the only leak that can touch a reported score. **Keep the official splits anyway:** a private "clean" split makes your numbers incomparable. `scripts/stats.py` lists all eleven.
 - **`i3_200.jpg` appears in no split list.** It is present in the images and has labels, but belongs to none of train/val/test. `AFODataset("all")` includes it; the three split loaders do not. It is excluded from training and from evaluation.
-- **The classes are heavily imbalanced** (see the table above) and **objects are mostly tiny**, so mAP averaged over classes and over sizes hides most of what matters. The benchmark therefore reports per-class AP and AP in AFO-specific size buckets, not just mAP50-95.
-
 All of the above are asserted in [tests/test_counts.py](tests/test_counts.py), so a change to the upstream dataset breaks the tests rather than passing unnoticed.
 
 ---
@@ -157,21 +130,7 @@ Reproducible baselines trained on the official train split, selected on val, rep
 
 AFO ships two label sets, and they are **two different tasks**. This repository keeps a separate leaderboard for each, because a score on one says nothing about the other.
 
-### Status — what is measured and what is not
-
-**18 runs are complete.** The matrix is not, and the gaps are listed rather than left for the reader to notice:
-
-| | done | pending |
-|---|---|---|
-| YOLOv8 + YOLO11, n/s/m @640 | 6 + 6, both arms | — |
-| best YOLO @1280 | both arms | — |
-| RF-DETR nano/small/base @640 | 3 in 6-class, 1 in 2-class | `small` and `base` in the 2-class arm |
-| RT-DETR-l | — | both arms |
-| best RF-DETR @1280 | — | both arms |
-| seed variance | — | three seeds for the top model of each arm |
-| **FPS** | — | **every row; see below** |
-
-**The FPS column is empty on purpose.** Early measurements were taken straight after training on a GPU that was still hot, and the same weights varied from 43.8 to 76.2 FPS depending on thermal state. Those numbers were discarded rather than published. The protocol now requires a separate pass after a cool-down with the temperature recorded beside each figure ([BENCHMARK.md §5](BENCHMARK.md)), and that pass has not been run yet. An empty column is a smaller lie than a number that measures the laptop's thermal history.
+**18 runs are complete; the matrix is not.** Still missing: RF-DETR `small` and `base` in the 2-class arm, RT-DETR-l in both, 1280 for the best RF-DETR, and seed-variance runs. Inference speed is not benchmarked at all — the only GPU here is a shared laptop, and repeated measurements of the same weights varied by up to 55%. See [BENCHMARK.md](BENCHMARK.md).
 
 ### 1. Six classes — the harder task
 
@@ -181,48 +140,32 @@ AFO ships two label sets, and they are **two different tasks**. This repository 
 
 **imgsz = 640**
 
-| model | mAP50 | mAP50-95 | AP-tiny (n=4424) | AP-small (n=2930) | params (M) | FPS | weights |
-|---|---|---|---|---|---|---|---|
-| `rfdetr-base` | 0.7279 | **0.4080** | 0.2778 | 0.3537 | 31.87 | — | [HF](https://huggingface.co/jgasienica/afo-rfdetr-base-640) |
-| `rfdetr-nano` | 0.7334 | **0.3937** | 0.2662 | 0.3478 | 30.56 | — | [HF](https://huggingface.co/jgasienica/afo-rfdetr-nano-640) |
-| `rfdetr-small` | 0.6625 | **0.3584** | 0.2147 | 0.3276 | 32.03 | — | [HF](https://huggingface.co/jgasienica/afo-rfdetr-small-640) |
-| `yolov8m` | 0.6442 | **0.3324** | 0.2450 | 0.3043 | 25.86 | — | [HF](https://huggingface.co/jgasienica/afo-yolov8m-640) |
-| `yolo11m` | 0.6137 | **0.3170** | 0.2917 | 0.2876 | 20.06 | — | [HF](https://huggingface.co/jgasienica/afo-yolo11m-640) |
-| `yolo11s` | 0.5290 | **0.2737** | 0.2820 | 0.3030 | 9.43 | — | [HF](https://huggingface.co/jgasienica/afo-yolo11s-640) |
-| `yolov8s` | 0.5231 | **0.2630** | 0.2592 | 0.2848 | 11.14 | — | [HF](https://huggingface.co/jgasienica/afo-yolov8s-640) |
-| `yolo11n` | 0.4716 | **0.2417** | 0.2222 | 0.2721 | 2.61 | — | [HF](https://huggingface.co/jgasienica/afo-yolo11n-640) |
-| `yolov8n` | 0.4928 | **0.2401** | 0.2383 | 0.2560 | 3.14 | — | [HF](https://huggingface.co/jgasienica/afo-yolov8n-640) |
+| model | mAP50 | mAP50-95 | AP-tiny (n=4424) | AP-small (n=2930) | params (M) | weights |
+|---|---|---|---|---|---|---|
+| `rfdetr-base` | 0.7279 | **0.4080** | 0.2778 | 0.3537 | 31.87 | [HF](https://huggingface.co/jgasienica/afo-rfdetr-base-640) |
+| `rfdetr-nano` | 0.7334 | **0.3937** | 0.2662 | 0.3478 | 30.56 | [HF](https://huggingface.co/jgasienica/afo-rfdetr-nano-640) |
+| `rfdetr-small` | 0.6625 | **0.3584** | 0.2147 | 0.3276 | 32.03 | [HF](https://huggingface.co/jgasienica/afo-rfdetr-small-640) |
+| `yolov8m` | 0.6442 | **0.3324** | 0.2450 | 0.3043 | 25.86 | [HF](https://huggingface.co/jgasienica/afo-yolov8m-640) |
+| `yolo11m` | 0.6137 | **0.3170** | 0.2917 | 0.2876 | 20.06 | [HF](https://huggingface.co/jgasienica/afo-yolo11m-640) |
+| `yolo11s` | 0.5290 | **0.2737** | 0.2820 | 0.3030 | 9.43 | [HF](https://huggingface.co/jgasienica/afo-yolo11s-640) |
+| `yolov8s` | 0.5231 | **0.2630** | 0.2592 | 0.2848 | 11.14 | [HF](https://huggingface.co/jgasienica/afo-yolov8s-640) |
+| `yolo11n` | 0.4716 | **0.2417** | 0.2222 | 0.2721 | 2.61 | [HF](https://huggingface.co/jgasienica/afo-yolo11n-640) |
+| `yolov8n` | 0.4928 | **0.2401** | 0.2383 | 0.2560 | 3.14 | [HF](https://huggingface.co/jgasienica/afo-yolov8n-640) |
 
 **imgsz = 1280**
 
-| model | mAP50 | mAP50-95 | AP-tiny (n=4424) | AP-small (n=2930) | params (M) | FPS | weights |
-|---|---|---|---|---|---|---|---|
-| `yolov8m` | 0.7013 | **0.3749** | 0.2716 | 0.3172 | 25.86 | — | [HF](https://huggingface.co/jgasienica/afo-yolov8m-1280) |
+| model | mAP50 | mAP50-95 | AP-tiny (n=4424) | AP-small (n=2930) | params (M) | weights |
+|---|---|---|---|---|---|---|
+| `yolov8m` | 0.7013 | **0.3749** | 0.2716 | 0.3172 | 25.86 | [HF](https://huggingface.co/jgasienica/afo-yolov8m-1280) |
 
-Sorted by test mAP50-95. Size buckets use a **fixed reference scale** — every image rescaled to a 640 px longest side, independent of the training resolution — so AP-tiny means the same population of objects in every row and 640 is directly comparable with 1280. One run per model, no seed-variance estimate: treat gaps under ~1 point as noise. FPS: batch 1, FP16, RTX 4090 **Laptop** GPU, measured in a separate pass after a thermal cool-down with the temperature recorded alongside. mAP does penalise false alarms on water; for the operating-point view (F1-optimal threshold, false alarms per image) read `operating_point` in each `metrics.json` — see [BENCHMARK.md](BENCHMARK.md).
+Sorted by test mAP50-95. Size buckets use a **fixed reference scale** — every image rescaled to a 640 px longest side, independent of the training resolution — so AP-tiny means the same population of objects in every row and 640 is directly comparable with 1280. One run per model, no seed-variance estimate: treat gaps under ~1 point as noise. Inference speed is not benchmarked: the only available GPU is a shared laptop, where repeated measurements of the same weights varied by up to 55%. Per-run diagnostics beyond mAP are in `operating_point` in each `metrics.json` — see [BENCHMARK.md](BENCHMARK.md).
 <!-- leaderboard:end -->
 
-#### Operating point — what AP does not show
+#### Beyond mAP
 
-`mAP` integrates the whole precision-recall curve and averages over classes. A deployed system runs at **one** threshold and cares about objects, not class balance. `metrics.json` records both views under `operating_point` (class-agnostic, IoU 0.5).
+![Precision-recall curves for the best model of each family, and false alarms per image rising with recall](docs/figures/pr-curves.png)
 
-![Two charts: precision-recall curves for three models crossing near recall 0.37, and false alarms per image rising with recall on a log scale](docs/figures/pr-curves.png)
-
-| model | mAP50 ↑ | AP50 weighted by object count | best-F1 precision | recall | **recall ceiling** | **objects never found** |
-|---|---|---|---|---|---|---|
-| `yolov8s` | **0.5231** | 0.5245 | 0.679 | 0.554 | 0.726 | **2,095** |
-| `yolov8n` | 0.4928 | 0.5518 | 0.712 | 0.557 | 0.748 | 1,922 |
-| `yolo11n` | 0.4716 | **0.5731** | **0.737** | **0.592** | **0.773** | **1,736** |
-
-**The two columns rank the models in opposite orders, and both are correct.** mAP averages the six classes with equal weight, so `yolov8s`'s large wins on the rare classes — `boat` 0.594 against 0.377, `kayak` 0.967 against 0.820, `bouy` 0.113 against 0.051 — outweigh its loss on `human`, which is 85% of all test objects (0.473 against 0.538). Weight by object instead of by class and the order reverses exactly.
-
-The PR curves cross at **recall ≈ 0.37**. Below that the v8 models are marginally ahead; across the entire useful region above it, `yolo11n` dominates on precision and reaches the highest recall.
-
-**The ceiling is the number that should worry a SAR reader.** No model exceeds **77% recall at any confidence** — 1,736 to 2,095 of the 7,639 test objects are never detected, and no threshold tuning recovers them. Neither 80% nor 90% recall is reachable by any of the three, so the "false alarms at 80% sensitivity" question has no answer yet on this dataset.
-
-So: `yolov8s` is better at *telling apart* the rare things it finds, and worse at *finding things at all*. Which model is "best" depends on the question, which is why both columns are published.
-
-Caveats: thresholds are picked on the test split, so these are optimistic upper bounds (deployment would pick on val); matching ignores class, because in SAR finding the object beats naming it; and these are **single-seed runs** — the gaps between the two `n` models are small enough that the ordering between them should not be treated as settled.
+**Every model leaves objects it can never find.** At a confidence threshold approaching zero the best reaches **87.4%** recall and the weakest 72.6% — between 965 and 2,095 of the 7,639 test objects are undetectable at any threshold. Only 3 of 9 models reach 80% recall at all; the right-hand panel shows what that sensitivity costs in false alarms. Per-run numbers are under `operating_point` in `metrics.json` (class-agnostic, IoU 0.5, thresholds chosen on test, so optimistic).
 
 ### 2. Two classes — continuing the published line
 
@@ -260,48 +203,13 @@ AP in percent, as in the paper. `small_obj` = human + buoy, `large_obj` = board 
 
 ## How this compares to the original paper
 
-The 2021 paper reports its own baselines. **They are not directly comparable to the table above**, and the reason is easy to miss, so it is spelled out here.
+**The paper's Table 2 measures a different thing.** It is computed on the **two-class** version of AFO, where `small_obj` = human + buoy and `large_obj` = the four vessel classes (paper §3.1). That is a *semantic* merge despite the names, so its `AP@50 Small Object` column is per-class AP for the merged class — not COCO's AP-small. Resolutions (544², 1333×750, 300²) and schedules (fixed 20k iterations) also differ from this protocol. The two-class leaderboard above interleaves both so the comparison sits in one place.
 
-### What reproduces exactly
+**Where this benchmark now stands against it.** `rfdetr-nano` at 640 reaches **36.44 AP / 81.23 AP@50**, passing every single model in Table 2 — including Faster R-CNN R101 (36.25 / 78.97) — and landing **1.3 AP short of the paper's best ensemble** (37.71). On `small_obj` it reaches 67.63 against RetinaNet-R50's 69.31, closing a gap that stood at 12.4 points when only YOLO models had been run.
 
-Every per-class count in the paper's Table 1 matches the released files to the object, computed independently by `scripts/stats.py`:
+**Verified against the release.** Every per-class count in the paper's Table 1 matches the files exactly, as do the split shares and the "over 99% of objects below 1% of image area" claim (measured 99.39%). Two things do not: the paper reports **3,647 images against 3,641 released** (the six missing must be background frames, since the object count matches), and *"more than 30% of images contain more than 20 instances"* measures **22.2%** — the 30% figure fits a threshold of 10 objects (30.8%), which looks like a transcription slip. Neither affects any conclusion in the paper.
 
-| | human | board | boat | buoy | sailboat | kayak |
-|---|---|---|---|---|---|---|
-| train | 22,272 | 2,749 | 506 | 428 | 115 | 890 |
-| val | 4,391 | 539 | 53 | 100 | 17 | 292 |
-| test | 6,511 | 634 | 143 | 59 | 28 | 264 |
-
-So do the split shares (67.4 / 13.48 / 19.1% of objects) and the claim that over 99% of objects cover less than 1% of the image area — measured: **99.39%**.
-
-### What does not reproduce
-
-- **3,647 images in the paper, 3,641 released.** Six were never published. They must be background frames, since the object count (39,991) matches exactly.
-- **"More than 30% of the images contain more than 20 instances."** Measured: **22.2%** of images hold more than 20 objects. The 30% figure fits a threshold of **10** objects (30.8%), which looks like a transcription slip. Neither number changes any conclusion in the paper.
-
-### Why the paper's Table 2 is a different measurement
-
-| | paper Table 2 | this leaderboard |
-|---|---|---|
-| classes | **2** (`small_obj`, `large_obj`) | **6** |
-| "Small/Large Object" columns | **per-class AP** for the two merged classes | — (we report per-class AP for all 6) |
-| input resolution | 544² (Darknet), 1333×750 (Detectron2), 300² (SSD) | 640, and 1280 for the best models |
-| schedule | fixed 20k iterations (50k for SSD) | 100 epochs, early stopping patience 20 |
-| evaluator | COCO AP | COCO AP via pycocotools, maxDets 300 |
-
-The two-category version merges **human + buoy → `small_obj`** and **board + boat + sailboat + kayak → `large_obj`** (paper §3.1). That is a *semantic* merge, despite the names — it is **not** a threshold on box area. Reading `AP@50 Small Object` in Table 2 as "AP for small objects" in the COCO size sense is the natural misreading, and it is wrong.
-
-### Reading the two-class leaderboard against Table 2
-
-The [two-class leaderboard](#2-two-classes--continuing-the-published-line) above interleaves this repository's runs with the paper's Table 2, so the comparison is in one place. Two things are worth pulling out of it.
-
-**Where YOLO11n lands.** A 2.6 M-parameter model from 2024, trained for 39 minutes, edges past YOLOv4 (32.06 against 31.50 AP; 72.87 against 71.13 AP@50). It is still **1.3–4.2 AP behind the two-stage Detectron2 baselines** and **5.7 AP behind the paper's ensemble**.
-
-**Where the gap is.** Entirely on small objects. On `large_obj` YOLO11n is within 1.5 points of the best single model in the paper (88.84 against 93.82 AP@50). On `small_obj` it is **12.4 points behind** RetinaNet-R50 (56.90 against 69.31). Five years of architecture progress at nano scale buys rough parity on vessels and closes none of the small-object gap — which is the claim the paper made in 2021, now measured with a different toolchain.
-
-**Why a post-hoc merge is not used for these rows.** A 6-class model's predictions *can* be collapsed into the two-class scheme, and `afo/evaluate.py` does record that under `two_category` in every 6-class `metrics.json`. But it is a different experiment: measured on YOLO11n @640, training directly on two classes beats the merged 6-class model by **+0.49 AP and +2.75 AP@50**, with the largest gain on `small_obj` (+3.45). The merge is a usable lower bound and a free diagnostic — it is not a leaderboard row, and the two-class table contains only models actually trained on two classes.
-
-Remaining caveats: resolutions differ (544² and 1333×750 in the paper, 640 here), schedules differ (fixed 20k iterations against 100 epochs with early stopping), and these are single-seed runs.
+Caveats on every comparison here: differing resolutions and schedules, and single-seed runs.
 
 ---
 

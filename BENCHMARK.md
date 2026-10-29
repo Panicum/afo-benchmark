@@ -104,7 +104,6 @@ Reported per run:
 - **per-class AP50-95** — mandatory, because `human` is 83% of objects and a good mAP can hide four dead classes
 - **AP by object size** — see below
 - **params (M)**, **GFLOPs**
-- **FPS**, batch 1, FP16, on the GPU named below, averaged over the test split after 50 warm-up images, with `torch.cuda.synchronize()` around each timing so the figure is computation and not queueing. Reported twice: **end-to-end** (preprocess + forward + NMS) and **forward only**; the first is what runs on a boat. **Measured in a separate pass after training, not at the end of a run** — see §5.
 
 **Detections per image: 300, not COCO's 100.** AFO is dense — up to 94 objects in one image, and 304 images hold 40 or more. At a cap of 100, a handful of confident false positives can push true positives past the cut and depress recall. `mAP50-95` at the COCO cap of 100 is reported alongside as `mAP50_95_maxdets100`.
 
@@ -148,46 +147,12 @@ This is the **laptop** part, not a desktop 4090: **76 SMs against 128**, a lower
 
 **Driver setting, required before any run:** NVIDIA Control Panel → Manage 3D Settings → **CUDA – Sysmem Fallback Policy → Prefer No Sysmem Fallback**. With the default policy an over-budget allocation silently spills to system RAM and streams over PCIe instead of raising `OutOfMemoryError` (§3). With it off, the failure is loud and immediate, and [`afo/vram.py`](afo/vram.py) becomes a second line of defence rather than the only one.
 
-### FPS is measured in a separate pass, after a cool-down
+### Inference speed is not benchmarked
 
-A laptop GPU that has been training for hours is hot and running at reduced clocks. The same weights measured **43.8 FPS immediately after a 45-minute training run and 76.2 FPS on a cold card** — a 74% spread that says nothing about the model.
-
-Discarding the first pass does not fix this: the second, third and fourth passes are hot too. So:
-
-- FPS is **not** measured by the training scripts. They write `"speed": null` and move on.
-- It is filled in afterwards by `python scripts/benchmark_fps.py --all`, which before each model waits for the GPU to drop below **50 °C** (up to 15 minutes) and then measures.
-- **Temperature, SM clock and power are recorded in `metrics.json` next to the number**, before and after the measurement, so a reader can see the thermal state the figure came from.
-- A spread above 15% across repeats raises a warning in the log: the card was still changing clocks and the figure should be re-taken.
-
-Preconditions for a valid measurement: plugged in, high-performance power profile, no other GPU load.
-
-### Measured epoch times and run order
-
-Calibrated on this GPU against the pre-resized dataset (2 or 3 timed epochs each):
-
-**Short calibrations overestimate badly — use completed runs.** Timing 2–3 epochs amortises dataset scanning, label caching and model setup over too few epochs. Calibration put `yolo11n` @640 at 78 s/epoch; the completed 100-epoch run came in at **26 s/epoch** (0.72 h total), a 3× overestimate. Every RF-DETR figure below is still from a 2-epoch calibration and is therefore an **upper bound** of unknown tightness.
-
-| model | arm | imgsz | batch | s/epoch | source |
-|---|---|---|---|---|---|
-| `yolo11n` | 6-class | 640 | 64 | **26** | completed 100-epoch run (0.72 h) |
-| `yolo11n` | 2-class | 640 | 64 | **23** | completed 100-epoch run (0.65 h) |
-| `yolo11m` | — | 640 | 16 | 88 | 3-epoch calibration (upper bound) |
-| `yolo11s` | — | 1280 | 8 | 166 | 3-epoch calibration (upper bound) |
-| `rfdetr-nano` | — | 640 | 8 | 154 | 2-epoch calibration (upper bound) |
-| `rfdetr-base` | — | 640 | 8 | 238 | 2-epoch calibration (upper bound) |
-
-The RF-DETR base row also illustrates the VRAM rule above: the same model takes 238 s/epoch at batch 8, 437 s at batch 4 (GPU underused), and 2812 s at batch 16 (thrashing). Batch 8 is both the largest that fits and the fastest.
-
-**Budget.** With two arms the matrix doubles, but the corrected YOLO timing more than pays for it: a YOLO run at 640 costs ~0.7 h, not the ~2.2 h first estimated. Twelve YOLO runs (six models × two arms) come to roughly **8–9 h**. The RF-DETR and 1280 rows dominate what remains and are still estimated from short calibrations.
-
-Because this is a laptop that is also a working machine, runs go **one model at a time, lightest first**, with the heavy rows deferred to days when the machine is free:
-
-1. YOLOv8 n/s/m and YOLO11 n/s/m at 640, both arms — ~0.7 h each, ~8–9 h total
-2. RT-DETR-l at 640, RF-DETR nano at 640, best YOLO at 1280
-3. RF-DETR small at 640
-4. RF-DETR base at 640, then at 1280 — only on free days
-
-The order is a scheduling decision and has no effect on any reported number; every run follows the identical protocol regardless of when it executes.
+The only GPU available is a laptop that is also a working machine. Repeated measurements of
+identical weights varied by up to 55% depending on thermal state and on what else was running,
+so no speed column is published. Reporting a number of that quality would be worse than
+reporting none. `scripts/benchmark_fps.py` exists and works; it needs a dedicated machine.
 
 ---
 
