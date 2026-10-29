@@ -202,44 +202,7 @@
     "categories": "2 (small_obj = human+bouy; large_obj = board/boat/sailboat/kayak)",
     "caveat": "Model uczony na 6 klasach, predykcje scalone po fakcie \u2014 nie to samo, co trening na wersji dwuklasowej."
   },
-  "speed": {
-    "gpu": "NVIDIA GeForce RTX 4090 Laptop GPU",
-    "imgsz": 640,
-    "precision": "fp16",
-    "batch": 1,
-    "warmup_images": 50,
-    "timed_images": 464,
-    "end_to_end": {
-      "mean_ms": 13.74,
-      "median_ms": 13.076,
-      "p95_ms": 18.161,
-      "fps": 63.23,
-      "fps_min": 49.16,
-      "fps_max": 72.78,
-      "fps_all": [
-        49.16,
-        63.23,
-        72.78
-      ]
-    },
-    "forward_only": {
-      "mean_ms": 6.617,
-      "median_ms": 6.251,
-      "p95_ms": 9.045,
-      "fps": 122.2,
-      "fps_min": 94.05,
-      "fps_max": 151.13,
-      "fps_all": [
-        94.05,
-        122.2,
-        151.13
-      ]
-    },
-    "note": "NVIDIA GeForce RTX 4090 Laptop GPU \u2014 czesc LAPTOPOWA (76 SM wobec 128 w wersji desktopowej), podatna na throttling termiczny. FPS porownywac miedzy wierszami tej tabeli, nie z wynikami z desktopowych kart.",
-    "repeats": 3,
-    "warmup_run_discarded_fps": 77.56,
-    "fps_spread_pct": 37.4
-  },
+  "speed": null,
   "params_M": 2.61,
   "gflops": 6.6,
   "model": "yolo11n",
@@ -253,5 +216,6 @@
     "peak_vram_GB": null,
     "gpu": "NVIDIA GeForce RTX 4090 Laptop GPU"
   },
-  "weights_hf": "jgasienica/afo-yolo11n-640"
+  "weights_hf": "jgasienica/afo-yolo11n-640",
+  "speed_note": "poprzedni pomiar odrzucony: zrobiony przed zmiana protokolu, bez cool-downu i bez zapisu temperatury. Do uzupelnienia przez scripts/benchmark_fps.py --all"
 }

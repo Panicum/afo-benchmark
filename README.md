@@ -157,6 +157,22 @@ Reproducible baselines trained on the official train split, selected on val, rep
 
 AFO ships two label sets, and they are **two different tasks**. This repository keeps a separate leaderboard for each, because a score on one says nothing about the other.
 
+### Status — what is measured and what is not
+
+**18 runs are complete.** The matrix is not, and the gaps are listed rather than left for the reader to notice:
+
+| | done | pending |
+|---|---|---|
+| YOLOv8 + YOLO11, n/s/m @640 | 6 + 6, both arms | — |
+| best YOLO @1280 | both arms | — |
+| RF-DETR nano/small/base @640 | 3 in 6-class, 1 in 2-class | `small` and `base` in the 2-class arm |
+| RT-DETR-l | — | both arms |
+| best RF-DETR @1280 | — | both arms |
+| seed variance | — | three seeds for the top model of each arm |
+| **FPS** | — | **every row; see below** |
+
+**The FPS column is empty on purpose.** Early measurements were taken straight after training on a GPU that was still hot, and the same weights varied from 43.8 to 76.2 FPS depending on thermal state. Those numbers were discarded rather than published. The protocol now requires a separate pass after a cool-down with the temperature recorded beside each figure ([BENCHMARK.md §5](BENCHMARK.md)), and that pass has not been run yet. An empty column is a smaller lie than a number that measures the laptop's thermal history.
+
 ### 1. Six classes — the harder task
 
 `human`, `wind/sup-board`, `boat`, `bouy`, `sailboat`, `kayak`. No baselines for this version have been published before, which is the reason it is here: it is the setting for anyone who needs to know *what* is in the water, and it exposes the 207× class imbalance that the two-class version averages away.
@@ -173,9 +189,9 @@ AFO ships two label sets, and they are **two different tasks**. This repository 
 | `yolov8m` | 0.6442 | **0.3324** | 0.2450 | 0.3043 | 25.86 | — | [HF](https://huggingface.co/jgasienica/afo-yolov8m-640) |
 | `yolo11m` | 0.6137 | **0.3170** | 0.2917 | 0.2876 | 20.06 | — | [HF](https://huggingface.co/jgasienica/afo-yolo11m-640) |
 | `yolo11s` | 0.5290 | **0.2737** | 0.2820 | 0.3030 | 9.43 | — | [HF](https://huggingface.co/jgasienica/afo-yolo11s-640) |
-| `yolov8s` | 0.5231 | **0.2630** | 0.2592 | 0.2848 | 11.14 | 70.0 | [HF](https://huggingface.co/jgasienica/afo-yolov8s-640) |
-| `yolo11n` | 0.4716 | **0.2417** | 0.2222 | 0.2721 | 2.61 | 63.2 | [HF](https://huggingface.co/jgasienica/afo-yolo11n-640) |
-| `yolov8n` | 0.4928 | **0.2401** | 0.2383 | 0.2560 | 3.14 | 66.7 | [HF](https://huggingface.co/jgasienica/afo-yolov8n-640) |
+| `yolov8s` | 0.5231 | **0.2630** | 0.2592 | 0.2848 | 11.14 | — | [HF](https://huggingface.co/jgasienica/afo-yolov8s-640) |
+| `yolo11n` | 0.4716 | **0.2417** | 0.2222 | 0.2721 | 2.61 | — | [HF](https://huggingface.co/jgasienica/afo-yolo11n-640) |
+| `yolov8n` | 0.4928 | **0.2401** | 0.2383 | 0.2560 | 3.14 | — | [HF](https://huggingface.co/jgasienica/afo-yolov8n-640) |
 
 **imgsz = 1280**
 

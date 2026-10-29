@@ -330,16 +330,34 @@ def fig_pr_curves(out: Path, results_dir: Path, categories: str = "6categories")
         op = operating_point(
             gt_doc, json.loads(pred.read_text(encoding="utf-8")), return_curve=True
         )
-        series.append((m["model"], op, m.get("mAP50")))
+        series.append((m["model"], op, m.get("mAP50"), m.get("mAP50_95") or 0))
     if len(series) < 2:
         print("  (pomijam krzywe PR — mniej niz dwa biegi 6-klasowe @640)")
         return None
-    series.sort(key=lambda t: -(t[2] or 0))
+    # sortowanie jak w leaderboardzie: po mAP50-95, nie po mAP50
+    series.sort(key=lambda t: -t[3])
+
+    # Najlepszy z kazdej RODZINY, nie wszystko. Dziewiec nakladajacych sie
+    # krzywych jest nieczytelne, a paleta kategorialna ma sprawdzone tylko
+    # pierwsze trzy sloty dla wykresow, gdzie porownuje sie kazda pare z kazda
+    # (krzywe, scatter) — poza nimi barwy przestaja byc rozroznialne przy
+    # daltonizmie. Reszta i tak jest w tabeli.
+    def family(name: str) -> str:
+        for f in ("rfdetr", "rtdetr", "yolo11", "yolov8"):
+            if name.startswith(f):
+                return f
+        return name
+
+    best_per_family: dict[str, tuple] = {}
+    for item in series:  # juz posortowane malejaco po mAP50
+        best_per_family.setdefault(family(item[0]), item)
+    series = list(best_per_family.values())[:len(SERIES)]
+    print(f"  (krzywe PR: najlepszy z kazdej rodziny — {', '.join(x[0] for x in series)})")
 
     fig, axes = plt.subplots(1, 2, figsize=(13, 4.4))
 
     ax = axes[0]
-    for i, (name, op, ap50) in enumerate(series):
+    for i, (name, op, ap50, _) in enumerate(series):
         c = op["curve"]
         ax.plot([d["recall"] for d in c], [d["precision"] for d in c],
                 color=SERIES[i], lw=2, label=f"{name}  (mAP50 {ap50:.3f})")
@@ -355,7 +373,7 @@ def fig_pr_curves(out: Path, results_dir: Path, categories: str = "6categories")
     _clean(ax, grid_axis="both")
 
     ax = axes[1]
-    for i, (name, op, _) in enumerate(series):
+    for i, (name, op, _, _) in enumerate(series):
         c = op["curve"]
         ax.plot([d["recall"] for d in c], [d["fp_per_image"] for d in c],
                 color=SERIES[i], lw=2, label=name)

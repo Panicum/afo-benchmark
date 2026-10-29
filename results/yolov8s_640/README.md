@@ -87,14 +87,7 @@ python scripts/train_ultralytics.py --model yolov8s --imgsz 640
 
 ## Speed
 
-Batch 1, FP16, `NVIDIA GeForce RTX 4090 Laptop GPU`, averaged over 464 test images after 50 warm-up images.
-
-| | FPS | mean | median | p95 |
-|---|---|---|---|---|
-| end-to-end (preprocess + forward + NMS) | **69.99** | 14.039 ms | 13.145 ms | 20.337 ms |
-| forward only | 158.66 | 6.303 ms | 5.513 ms | 11.238 ms |
-
-This is a **laptop** GPU (76 SMs against a desktop 4090's 128) and it throttles. Repeated measurements of these same weights varied by tens of percent depending on thermal state. Use this figure to compare rows measured in the same session, not as an absolute capability claim.
+_Not measured._
 
 ## Usage
 

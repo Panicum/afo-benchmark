@@ -2,7 +2,7 @@
 
 This file is the contract. It is written **before** any model is trained, and every result in the leaderboard follows it. A result that deviates in any respect is not comparable and is not merged — see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-Status: **protocol fixed, runs in progress.** The leaderboard lives in [README.md](README.md).
+Status: **protocol fixed, 18 runs complete, matrix unfinished.** What is done and what is missing is listed in the README's Status table — including the FPS column, which is empty because the measurement protocol changed and the new pass has not been run. The leaderboard lives in [README.md](README.md).
 
 ---
 
