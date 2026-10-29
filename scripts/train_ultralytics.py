@@ -22,6 +22,7 @@ from pathlib import Path
 import yaml
 
 from afo.download import dataset_root
+from afo.runstate import accumulate_hours
 from afo.vram import DEFAULT_LIMIT_FRAC, check_peak, reset_peak, sysmem_fallback_active
 
 BATCH_CANDIDATES = {640: [8, 16, 32, 64], 1280: [2, 4, 8, 16]}
@@ -275,10 +276,12 @@ def main() -> None:
     metrics["framework"] = "ultralytics"
     metrics["params_M"] = round(n_params / 1e6, 2)
     metrics["gflops"] = gflops
+    # Czas treningu kumulowany przez wznowienia — patrz afo/runstate.py
+    total_h = accumulate_hours(run_dir, None if train_s is None else train_s / 3600)
     metrics["train"] = {
         "epochs_budget": args.epochs, "patience": args.patience, "batch": batch,
         "seed": args.seed,
-        "hours": None if train_s is None else round(train_s / 3600, 3),
+        "hours": total_h,
         "peak_vram_GB": None if c is None else round(c.peak_GB, 2),
         "gpu": str(gpu),
     }

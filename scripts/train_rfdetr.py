@@ -26,6 +26,7 @@ import yaml
 
 from afo.coco import CATEGORY_ID_OFFSET
 from afo.download import dataset_root
+from afo.runstate import accumulate_hours
 from afo.vram import DEFAULT_LIMIT_FRAC, check_peak, reset_peak, sysmem_fallback_active
 
 #: batch dobrany pomiarem na RTX 4090 Laptop (16 GB). Patrz BENCHMARK.md §5.
@@ -303,10 +304,12 @@ def main() -> None:
         }
     metrics["params_M"] = round(n_params / 1e6, 2)
     metrics["gflops"] = None
+    # Czas treningu kumulowany przez wznowienia — patrz afo/runstate.py
+    total_h = accumulate_hours(run_dir, None if train_s is None else train_s / 3600)
     metrics["train"] = {
         "epochs_budget": args.epochs, "patience": args.patience, "batch": batch,
         "grad_accum_steps": accum, "effective_batch": batch * accum, "seed": args.seed,
-        "hours": None if train_s is None else round(train_s / 3600, 3), "gpu": str(gpu),
+        "hours": total_h, "gpu": str(gpu),
     }
     metrics["weights_hf"] = f"jgasienica/afo-{model_name}-{args.imgsz}{suffix.replace('_','-')}"
 

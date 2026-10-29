@@ -1,0 +1,117 @@
+{
+  "gt_json": "<AFO_ROOT>/coco2cat/test.json",
+  "dt_json": "results/rfdetr-nano_640_2cat/predictions_test.json",
+  "imgsz": 640,
+  "n_images": 514,
+  "n_gt_objects": 7639,
+  "n_detections": 154156,
+  "max_dets_primary": 300,
+  "class_names": [
+    "small_obj",
+    "large_obj"
+  ],
+  "mAP50_95": 0.3643635467141134,
+  "mAP50": 0.812268602463873,
+  "mAP50_95_maxdets100": 0.3632334949116739,
+  "AP_S_coco": 0.006764807466272159,
+  "AP_M_coco": 0.3537185321494821,
+  "AP_L_coco": 0.37491901284937823,
+  "per_class": {
+    "small_obj": {
+      "AP50_95": 0.22340118649259114,
+      "AP50": 0.6763428438524417,
+      "n_gt": 6570
+    },
+    "large_obj": {
+      "AP50_95": 0.5053259069356357,
+      "AP50": 0.9481943610753041,
+      "n_gt": 1069
+    }
+  },
+  "afo_buckets": {
+    "tiny": {
+      "AP50_95": 0.3172894119597714,
+      "AP50": 0.7005919752609548,
+      "n_gt": 4424
+    },
+    "small": {
+      "AP50_95": 0.37065223422088645,
+      "AP50": 0.8397855094166576,
+      "n_gt": 2930
+    },
+    "medium": {
+      "AP50_95": 0.5583955056307126,
+      "AP50": 0.9529920546828243,
+      "n_gt": 285
+    },
+    "large": {
+      "AP50_95": NaN,
+      "AP50": NaN,
+      "n_gt": 0
+    }
+  },
+  "afo_buckets_reference_side": 640,
+  "afo_buckets_note": "Pola mierzone po przeskalowaniu kazdego obrazu do dluzszego boku 640 px. Skala jest stala i niezalezna od imgsz, wiec kubelki opisuja te sama populacje obiektow we wszystkich biegach i SA porownywalne miedzy 640 a 1280.",
+  "operating_point": {
+    "threshold": 0.41,
+    "precision": 0.7782005979885839,
+    "recall": 0.7495745516428852,
+    "f1": 0.7636193905447756,
+    "tp": 5726,
+    "fp": 1632,
+    "fn": 1913,
+    "fp_per_image": 3.1750972762645913,
+    "fn_per_image": 3.7217898832684826,
+    "n_images": 514,
+    "n_gt_objects": 7639,
+    "iou_threshold": 0.5,
+    "class_agnostic": true,
+    "at_recall": {
+      "r80": {
+        "threshold": 0.06,
+        "precision": 0.5121747134131035,
+        "recall": 0.8012828904306847,
+        "f1": 0.6249106687085247,
+        "tp": 6121,
+        "fp": 5830,
+        "fn": 1518,
+        "fp_per_image": 11.342412451361868,
+        "fn_per_image": 2.953307392996109
+      },
+      "r90": {
+        "reachable": false,
+        "max_recall": 0.8680455557010079,
+        "note": "model nie osiaga recallu 0.9 przy zadnym progu"
+      }
+    },
+    "recall_ceiling": {
+      "recall": 0.8680455557010079,
+      "threshold": 0.0,
+      "missed_objects": 1008,
+      "note": "Najwyzszy osiagalny recall, przy progu zbiegajacym do zera. Obiekty ponad ten sufit nie sa znajdowane przy ZADNEJ ufnosci \u2014 zadne strojenie progu ich nie odzyska."
+    },
+    "note": "Progi dobrane na zbiorze TESTOWYM \u2014 to gorne ograniczenia, bo wybrane na tych samych danych, na ktorych mierzone. Do wdrozenia prog dobiera sie na walidacji. Dopasowanie BEZ rozroznienia klas, wiec ta diagnostyka wazy obiektami, podczas gdy mAP wazy klasami \u2014 przy 85% udziale klasy human obie moga dac inna kolejnosc modeli i obie sa poprawne."
+  },
+  "categories": "2categories",
+  "speed": null,
+  "model": "rfdetr-nano",
+  "framework": "rfdetr",
+  "params_M": 30.54,
+  "gflops": null,
+  "train": {
+    "epochs_budget": 100,
+    "patience": 20,
+    "batch": 8,
+    "grad_accum_steps": 2,
+    "effective_batch": 16,
+    "seed": 0,
+    "hours": 6.32,
+    "gpu": "NVIDIA GeForce RTX 4090 Laptop GPU",
+    "hours_segments": [
+      4.5,
+      1.82
+    ],
+    "hours_note": "bieg wznawiany; suma odcinkow. Pierwszy odcinek odczytany z logu kolejki, bo kumulacja powstala pozniej"
+  },
+  "weights_hf": "jgasienica/afo-rfdetr-nano-640-2cat"
+}

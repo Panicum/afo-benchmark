@@ -167,6 +167,7 @@ AFO ships two label sets, and they are **two different tasks**. This repository 
 
 | model | mAP50 | mAP50-95 | AP-tiny (n=4424) | AP-small (n=2930) | params (M) | FPS | weights |
 |---|---|---|---|---|---|---|---|
+| `rfdetr-base` | 0.7279 | **0.4080** | 0.2778 | 0.3537 | 31.87 | — | [HF](https://huggingface.co/jgasienica/afo-rfdetr-base-640) |
 | `rfdetr-nano` | 0.7334 | **0.3937** | 0.2662 | 0.3478 | 30.56 | — | [HF](https://huggingface.co/jgasienica/afo-rfdetr-nano-640) |
 | `rfdetr-small` | 0.6625 | **0.3584** | 0.2147 | 0.3276 | 32.03 | — | [HF](https://huggingface.co/jgasienica/afo-rfdetr-small-640) |
 | `yolov8m` | 0.6442 | **0.3324** | 0.2450 | 0.3043 | 25.86 | — | [HF](https://huggingface.co/jgasienica/afo-yolov8m-640) |
@@ -232,6 +233,7 @@ python scripts/train_ultralytics.py --model yolo11n --imgsz 640 --categories 2ca
 | RetinaNet (R101) | paper 2021 | 1333 | 35.83 | 79.36 | 65.00 | 93.71 | — |
 | Faster R-CNN (R101-FPN) | paper 2021 | 1333 | 36.25 | 78.97 | 64.11 | 93.82 | — |
 | `yolo11m` @1280 | **this repo** | 1280 | **36.29** | **77.72** | 62.15 | 93.29 | [HF](https://huggingface.co/jgasienica/afo-yolo11m-1280-2cat) |
+| `rfdetr-nano` @640 | **this repo** | 640 | **36.44** | **81.23** | 67.63 | 94.82 | [HF](https://huggingface.co/jgasienica/afo-rfdetr-nano-640-2cat) |
 | Ensemble 3 (best AP@50) | paper 2021 | 1333 | 37.20 | 82.16 | 70.31 | 94.00 | — |
 | Ensemble 4 (paper's contribution) | paper 2021 | 1333 | 37.71 | 81.55 | 68.39 | 94.71 | — |
 
