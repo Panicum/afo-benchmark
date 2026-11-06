@@ -14,11 +14,10 @@ size_categories:
 ---
 
 <!--
-Proposed card for https://huggingface.co/datasets/jgasienica/afo-dataset — NOT yet pushed.
-Adds the figures and a baselines section to the card currently live there.
-Pushing it also requires the referenced images:
-  huggingface-cli upload jgasienica/afo-dataset docs/figures figures --repo-type=dataset
+Source for the card at https://huggingface.co/datasets/jgasienica/afo-dataset — edit here, then:
   huggingface-cli upload jgasienica/afo-dataset docs/dataset-card.md README.md --repo-type=dataset
+The images it references live in that repo under figures/ and come from docs/figures/:
+  huggingface-cli upload jgasienica/afo-dataset docs/figures figures --repo-type=dataset
 -->
 
 # AFO – Aerial dataset of Floating Objects
@@ -37,6 +36,10 @@ are at **[github.com/Panicum/afo-benchmark](https://github.com/Panicum/afo-bench
 3,641 images extracted from 50 drone videos, carrying **39,991 annotated objects**. Most objects are
 small: they are swimmers and boards seen from tens of metres up, often only a few dozen pixels across.
 729 images contain no annotated object and are kept as negatives.
+
+One image, `i3_200.jpg`, is listed in none of the three split files — together they cover 3,640 of the
+3,641 images. It is one of the background frames. Documented, not fixed: the splits are shipped as
+released.
 
 Measured image resolutions (four distinct sizes):
 
@@ -61,14 +64,22 @@ The six classes, **in index order** (original spelling from `6categories.names` 
 ![Class distribution](figures/classes.png)
 
 `human` is 83 % of all objects and `sailboat` 0.4 %, so per-class results matter more here than a
-class-averaged mAP.
+class-averaged mAP. The figures spell the class `buoy`; the label files spell it `bouy`, and that is
+what the loader must use.
 
 ![Object size distribution](figures/object-size.png)
 
+Object size is the reason this dataset is hard. In native 2.5K–4K pixels almost nothing is small by
+COCO's thresholds — the `tiny` bucket holds 15 objects in the entire dataset — but at the resolution a
+detector actually sees, 62 % of objects fall into `tiny` at 640 px input and 54 % into `small` at
+1280 px.
+
 ![Objects per image](figures/density.png)
 
-Images are also dense: a single frame carries up to 94 annotated objects, which is why the benchmark
-raises pycocotools' `maxDets` above the COCO default of 100.
+Frames are also crowded: a single image carries up to 94 annotated objects, which is why the benchmark
+raises pycocotools' `maxDets` above the COCO default of 100. Note that the negatives are not spread
+evenly — 720 of 2,787 train images and 8 of 339 val images have no objects, while the test split has
+none at all.
 
 Splits, as shipped in the original release:
 
