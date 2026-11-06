@@ -14,9 +14,8 @@ metrics:
   - mAP
 library_name: ultralytics
 pipeline_tag: object-detection
-base_model: yolo11s
 model-index:
-  - name: afo-yolo11s-640
+  - name: afo-yolo11s-640-2cat
     results:
       - task:
           type: object-detection
@@ -31,9 +30,9 @@ model-index:
             value: 0.7067
 ---
 
-# AFO — yolo11s @ 640
+# AFO — yolo11s @ 640 (2-class)
 
-`yolo11s` fine-tuned from COCO-pretrained weights on **[AFO](https://huggingface.co/datasets/jgasienica/afo-dataset)**, a maritime search-and-rescue dataset of 3,641 drone images with 39,991 hand-annotated objects in six classes.
+`yolo11s` fine-tuned from COCO-pretrained weights on **[AFO](https://huggingface.co/datasets/jgasienica/afo-dataset)**, a maritime search-and-rescue dataset of 3,641 drone images with 39,991 hand-annotated objects. Two merged classes, following Table 2 of the original AFO paper.
 
 Produced by the reproducible benchmark at **[github.com/Panicum/afo-benchmark](https://github.com/Panicum/afo-benchmark)** under the protocol in [`BENCHMARK.md`](https://github.com/Panicum/afo-benchmark/blob/main/BENCHMARK.md). Every number below is measured on the **official test split** with one shared pycocotools evaluator, so it is comparable to every other row of that leaderboard — and to nothing else.
 
@@ -52,22 +51,23 @@ Produced by the reproducible benchmark at **[github.com/Panicum/afo-benchmark](h
 | `small_obj` | 0.1417 | 0.4804 | 6,570 |
 | `large_obj` | 0.4999 | 0.9330 | 1,069 |
 
-### AP by object size, measured at the model's input resolution
+### AP by object size
 
-| bucket | √area at input | AP50-95 | test objects |
+| bucket | √area at reference scale | AP50-95 | test objects |
 |---|---|---|---|
 | tiny | < 16² | 0.2318 | 4,424 |
 | small | 16²–32² | 0.3362 | 2,930 |
 | medium | 32²–96² | 0.5301 | 285 |
 | large | > 96² | — (no objects) | 0 |
 
-Every image is rescaled to a **fixed 640 px longest side** before bucketing, because AFO images are 2.5K–4K and in native pixels the `tiny` bucket would hold 15 objects in the whole dataset. The scale is deliberately independent of the training resolution, so these columns **are** comparable across runs at different `imgsz`.
+Every image is rescaled to a **fixed 640 px longest side** before bucketing, because AFO images are 2.5K–4K and in native pixels the `tiny` bucket would hold 15 objects in the whole dataset. The scale is deliberately independent of the training resolution, so these rows are comparable across runs at different `imgsz`.
 
 ## Training
 
 | | |
 |---|---|
 | data | official AFO train split (2,787 images, 26,960 objects), coordinates clipped to [0,1] |
+| labels | `2categories` |
 | selection | best val mAP50-95; test touched once, after training |
 | epochs | 100 budget, patience 20 |
 | batch | 32 |
@@ -78,30 +78,27 @@ Every image is rescaled to a **fixed 640 px longest side** before bucketing, bec
 | wall-clock | 1.241 h |
 
 ```bash
-python scripts/train_ultralytics.py --model yolo11s --imgsz 640
+python scripts/train_ultralytics.py --model yolo11s --imgsz 640 --categories 2categories
 ```
-
-## Speed
-
-_Not benchmarked._ The only GPU available was a shared laptop, where repeated measurements of the same weights varied by up to 55% with thermal state. No number is published rather than a bad one.
 
 ## Usage
 
 ```python
 from ultralytics import YOLO
 
-model = YOLO("afo-yolo11s-640.pt")
+model = YOLO("afo-yolo11s-640-2cat.pt")
 results = model("drone_frame.jpg", imgsz=640)
 ```
 
-Classes, in index order: `human`, `wind/sup-board`, `boat`, `bouy`, `sailboat`, `kayak`. The `bouy` spelling is a typo in the original dataset release and is kept so class indices stay correct.
+Classes, in index order: `small_obj`, `large_obj`.
 
-## Limitations — read before deploying
+The two classes are the **semantic merge from Table 2 of the original paper** — `small_obj` = human + buoy, `large_obj` = board + boat + sailboat + kayak — so this model's numbers are directly comparable to the published ones. It is a merge by object kind, not by box area, so `small_obj` is not COCO's AP-small.
 
-- **mAP is threshold-free; deployment is not.** AP integrates the whole precision-recall curve, while a fielded system runs at one confidence threshold. False alarms *are* penalised by mAP (any detection not matching a ground-truth box lowers precision, and the test split is overwhelmingly open water by area), but the number an operator cares about — false alarms per frame at the chosen threshold — is not visible in AP. The `operating_point` block in `metrics.json` reports it.
-- **The dataset is heavily imbalanced**: `human` is 83% of all objects, `sailboat` 0.4%. Treat the per-class table as the real result; mAP averages over classes that have very different support.
-- **One run, one seed.** No variance estimate. Differences under roughly 1 mAP point against another row should not be read as real.
-- **Val-to-test gap is large by design.** The test split is nine videos absent from train and val, so these numbers describe generalisation to unseen scenes, not to unseen frames.
+## Limitations
+
+- **The dataset is heavily imbalanced.** Treat the per-class table as the real result; mAP averages over classes with very different support.
+- **One run, one seed.** No variance estimate — differences under roughly 1 mAP point against another row should not be read as real.
+- **Val-to-test gap is large by design.** The test split is drawn from videos absent from train and val, so these numbers describe generalisation to unseen scenes, not unseen frames.
 - Trained on imagery resized to a 1280 px longest side; see BENCHMARK.md §1.
 
 ## License

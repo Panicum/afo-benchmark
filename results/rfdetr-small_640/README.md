@@ -12,9 +12,7 @@ datasets:
   - jgasienica/afo-dataset
 metrics:
   - mAP
-library_name: ultralytics
 pipeline_tag: object-detection
-base_model: rfdetr-small
 model-index:
   - name: afo-rfdetr-small-640
     results:
@@ -33,7 +31,7 @@ model-index:
 
 # AFO — rfdetr-small @ 640
 
-`rfdetr-small` fine-tuned from COCO-pretrained weights on **[AFO](https://huggingface.co/datasets/jgasienica/afo-dataset)**, a maritime search-and-rescue dataset of 3,641 drone images with 39,991 hand-annotated objects in six classes.
+`rfdetr-small` fine-tuned from COCO-pretrained weights on **[AFO](https://huggingface.co/datasets/jgasienica/afo-dataset)**, a maritime search-and-rescue dataset of 3,641 drone images with 39,991 hand-annotated objects. Six classes.
 
 Produced by the reproducible benchmark at **[github.com/Panicum/afo-benchmark](https://github.com/Panicum/afo-benchmark)** under the protocol in [`BENCHMARK.md`](https://github.com/Panicum/afo-benchmark/blob/main/BENCHMARK.md). Every number below is measured on the **official test split** with one shared pycocotools evaluator, so it is comparable to every other row of that leaderboard — and to nothing else.
 
@@ -56,22 +54,23 @@ Produced by the reproducible benchmark at **[github.com/Panicum/afo-benchmark](h
 | `sailboat` | 0.4790 | 0.6794 | 28 |
 | `kayak` | 0.4651 | 0.8548 | 264 |
 
-### AP by object size, measured at the model's input resolution
+### AP by object size
 
-| bucket | √area at input | AP50-95 | test objects |
+| bucket | √area at reference scale | AP50-95 | test objects |
 |---|---|---|---|
 | tiny | < 16² | 0.2147 | 4,424 |
 | small | 16²–32² | 0.3276 | 2,930 |
 | medium | 32²–96² | 0.5348 | 285 |
 | large | > 96² | — (no objects) | 0 |
 
-Every image is rescaled to a **fixed 640 px longest side** before bucketing, because AFO images are 2.5K–4K and in native pixels the `tiny` bucket would hold 15 objects in the whole dataset. The scale is deliberately independent of the training resolution, so these columns **are** comparable across runs at different `imgsz`.
+Every image is rescaled to a **fixed 640 px longest side** before bucketing, because AFO images are 2.5K–4K and in native pixels the `tiny` bucket would hold 15 objects in the whole dataset. The scale is deliberately independent of the training resolution, so these rows are comparable across runs at different `imgsz`.
 
 ## Training
 
 | | |
 |---|---|
 | data | official AFO train split (2,787 images, 26,960 objects), coordinates clipped to [0,1] |
+| labels | `6categories` |
 | selection | best val mAP50-95; test touched once, after training |
 | epochs | 100 budget, patience 20 |
 | batch | 8 |
@@ -82,30 +81,30 @@ Every image is rescaled to a **fixed 640 px longest side** before bucketing, bec
 | wall-clock | 7.169 h |
 
 ```bash
-python scripts/train_ultralytics.py --model rfdetr-small --imgsz 640
+python scripts/train_rfdetr.py --model rfdetr-small --imgsz 640
 ```
-
-## Speed
-
-_Not benchmarked._ The only GPU available was a shared laptop, where repeated measurements of the same weights varied by up to 55% with thermal state. No number is published rather than a bad one.
 
 ## Usage
 
 ```python
-from ultralytics import YOLO
+from rfdetr import RFDETRSmall
 
-model = YOLO("afo-rfdetr-small-640.pt")
-results = model("drone_frame.jpg", imgsz=640)
+model = RFDETRSmall(
+    pretrain_weights="afo-rfdetr-small-640.pth",
+    resolution=640,
+    num_classes=6,
+)
+detections = model.predict("drone_frame.jpg", threshold=0.25)
+# detections.class_id holds 0-based indices into the class list below
 ```
 
 Classes, in index order: `human`, `wind/sup-board`, `boat`, `bouy`, `sailboat`, `kayak`. The `bouy` spelling is a typo in the original dataset release and is kept so class indices stay correct.
 
-## Limitations — read before deploying
+## Limitations
 
-- **mAP is threshold-free; deployment is not.** AP integrates the whole precision-recall curve, while a fielded system runs at one confidence threshold. False alarms *are* penalised by mAP (any detection not matching a ground-truth box lowers precision, and the test split is overwhelmingly open water by area), but the number an operator cares about — false alarms per frame at the chosen threshold — is not visible in AP. The `operating_point` block in `metrics.json` reports it.
-- **The dataset is heavily imbalanced**: `human` is 83% of all objects, `sailboat` 0.4%. Treat the per-class table as the real result; mAP averages over classes that have very different support.
-- **One run, one seed.** No variance estimate. Differences under roughly 1 mAP point against another row should not be read as real.
-- **Val-to-test gap is large by design.** The test split is nine videos absent from train and val, so these numbers describe generalisation to unseen scenes, not to unseen frames.
+- **The dataset is heavily imbalanced.** Treat the per-class table as the real result; mAP averages over classes with very different support.
+- **One run, one seed.** No variance estimate — differences under roughly 1 mAP point against another row should not be read as real.
+- **Val-to-test gap is large by design.** The test split is drawn from videos absent from train and val, so these numbers describe generalisation to unseen scenes, not unseen frames.
 - Trained on imagery resized to a 1280 px longest side; see BENCHMARK.md §1.
 
 ## License
