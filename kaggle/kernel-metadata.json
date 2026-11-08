@@ -1,0 +1,26 @@
+{
+  "id": "jangsienicajzkowy/afo-quick-start-and-benchmark-baselines",
+  "title": "AFO — quick start, visualisation and benchmark baselines",
+  "code_file": "afo-quickstart.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": "true",
+  "enable_gpu": "true",
+  "enable_tpu": "false",
+  "enable_internet": "true",
+  "machine_shape": "",
+  "dataset_sources": [
+    "jangsienicajzkowy/afo-aerial-dataset-of-floating-objects"
+  ],
+  "competition_sources": [],
+  "kernel_sources": [],
+  "model_sources": [],
+  "keywords": [
+    "object detection",
+    "computer vision",
+    "drones",
+    "search and rescue",
+    "yolo",
+    "rf-detr"
+  ]
+}

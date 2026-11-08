@@ -34,3 +34,10 @@ paper.pdf
 
 # log kolejki — stan maszyny, nie wynik badania
 results/_queue.log
+
+# artefakty uruchomienia notebooka kaggle'owego: przy pracy lokalnej WORK
+# wskazuje katalog notebooka, wiec obrazy 1280 i predykcje ladowalyby w repo
+kaggle/coco/
+kaggle/yolo1280/
+kaggle/pred_*.json
+kaggle/*executed*.ipynb

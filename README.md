@@ -42,6 +42,10 @@ python scripts/stats.py                 # every number in this README
 python scripts/make_figures.py          # every figure, into docs/figures/
 ```
 
+**Kaggle notebook** — load, visualise and reproduce two leaderboard rows with the published
+weights, without downloading anything: [`kaggle/afo-quickstart.ipynb`](kaggle/afo-quickstart.ipynb)
+runs on the Kaggle mount of the dataset and needs no training.
+
 ---
 
 ## Classes

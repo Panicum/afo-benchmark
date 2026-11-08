@@ -180,8 +180,18 @@ def predict_ultralytics(
     conf: float = CONF_THRESHOLD,
     max_det: int = MAX_DET,
     half: bool = True,
+    device: str | int | None = None,
 ) -> Path:
-    """Uruchamia model Ultralytics na tescie i zapisuje wyniki w formacie COCO."""
+    """Uruchamia model Ultralytics na tescie i zapisuje wyniki w formacie COCO.
+
+    ``device=None`` wybiera GPU, jesli jest, a w przeciwnym razie CPU. Wczesniej
+    bylo tu zaszyte ``device=0`` i na maszynie bez CUDA funkcja konczyla sie
+    bledem zamiast policzyc wolniej.
+
+    Na CPU wylaczamy FP16 — ta precyzja nie ma tam sensu. Opublikowane liczby
+    powstaly w FP16 na GPU, wiec wynik z CPU moze sie roznic na ostatnim miejscu
+    po przecinku; to rozna arytmetyka, nie inny protokol.
+    """
     from ultralytics import YOLO
 
     # korzen zbioru rozwiazujemy tylko wtedy, gdy jest potrzebny na domyslna
@@ -210,6 +220,14 @@ def predict_ultralytics(
             f"{sorted(not_predicted)[:10]}"
         )
 
+    if device is None:
+        import torch
+
+        device = 0 if torch.cuda.is_available() else "cpu"
+    if device == "cpu" and half:
+        half = False
+    print(f"[predict] device={device} half={half}")
+
     model = YOLO(weights)
     results = []
     n_rescaled = 0
@@ -217,7 +235,7 @@ def predict_ultralytics(
 
     for p in tqdm(files, desc="predict", unit="img"):
         r = model.predict(
-            str(p), imgsz=imgsz, conf=conf, max_det=max_det, device=0,
+            str(p), imgsz=imgsz, conf=conf, max_det=max_det, device=device,
             half=half, verbose=False, augment=False,
         )[0]
         img_id, gt_w, gt_h = id_of[p.name]
