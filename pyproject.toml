@@ -27,7 +27,16 @@ dependencies = [
 
 [project.optional-dependencies]
 notebook = ["matplotlib>=3.7", "jupyter", "nbconvert", "nbformat"]
-train = ["ultralytics>=8.3", "rfdetr>=1.1", "torch>=2.1"]
+# wnioskowanie z opublikowanych wag: oba frameworki + opencv (skalowanie obrazow
+# do 1280, bez ktorego liczby nie zejda sie z leaderboardem) + matplotlib na wykresy
+baselines = [
+    "ultralytics>=8.3",
+    "rfdetr>=1.1",
+    "torch>=2.1",
+    "opencv-python>=4.8",
+    "matplotlib>=3.7",
+]
+train = ["ultralytics>=8.3", "rfdetr>=1.1", "torch>=2.1", "opencv-python>=4.8"]
 dev = ["pytest>=7.4"]
 
 [project.urls]

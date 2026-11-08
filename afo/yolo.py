@@ -57,6 +57,52 @@ def _resize_to(src: Path, dst: Path, max_side: int, quality: int = 95) -> str:
     return "resize"
 
 
+def prepare_images(
+    split: str,
+    out_dir: Path | str,
+    max_side: int,
+    root: Path | str | None = None,
+    categories: str = "6categories",
+    clip: bool = True,
+    progress: bool = True,
+) -> Path:
+    """Przeskalowane kopie obrazow JEDNEGO podzialu, bez etykiet i bez yaml-a.
+
+    ``prepare_yolo`` przerabia wszystkie trzy podzialy (3641 obrazow), co przy
+    odtwarzaniu samego wyniku testowego jest marnotrawstwem — tu wystarczy 514.
+    Skalowanie idzie tym samym ``_resize_to`` i ta sama jakoscia JPEG, wiec
+    piksele sa identyczne z tymi, na ktorych liczono opublikowane metryki;
+    inaczej wynik nie zszedlby sie na czwartym miejscu po przecinku.
+
+    Zapisuje WYLACZNIE do ``out_dir`` — korzen zbioru moze byc tylko do odczytu.
+    """
+    ds = AFODataset(split, root=root, clip=clip, categories=categories)
+    out = Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+
+    records = ds.records
+    if progress:
+        try:
+            from tqdm import tqdm
+
+            records = tqdm(records, desc=f"resize/{split}", unit="img", leave=False)
+        except ImportError:
+            pass
+
+    modes = {"link": 0, "copy": 0, "exists": 0, "resize": 0}
+    for rec in records:
+        modes[_resize_to(rec.image_path, out / rec.filename, max_side)] += 1
+
+    n = sum(1 for p in out.iterdir() if p.suffix.lower() in (".jpg", ".jpeg", ".png"))
+    if n != len(ds.records):
+        raise RuntimeError(
+            f"{out}: {n} obrazow, a podzial {split} ma {len(ds.records)} — "
+            f"katalog zawiera cos jeszcze albo czegos brakuje"
+        )
+    print(f"[images/{split}] {n} obrazow w {out} (dluzszy bok <= {max_side}, {modes})")
+    return out
+
+
 def prepare_yolo(
     root: Path | str | None = None,
     out_dir: Path | str | None = None,

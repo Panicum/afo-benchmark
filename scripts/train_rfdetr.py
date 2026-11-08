@@ -16,7 +16,6 @@ from __future__ import annotations
 import argparse
 import json
 import platform
-import re
 import subprocess
 import sys
 import time
@@ -24,8 +23,8 @@ from pathlib import Path
 
 import yaml
 
-from afo.coco import CATEGORY_ID_OFFSET
 from afo.download import dataset_root
+from afo.predict import build_rfdetr_predictions as build_predictions
 from afo.runstate import accumulate_hours
 from afo.vram import DEFAULT_LIMIT_FRAC, check_peak, reset_peak, sysmem_fallback_active
 
@@ -36,7 +35,6 @@ EFFECTIVE_BATCH = 16  # grad_accum dobierany tak, zeby to utrzymac
 SIZES = {"nano": "RFDETRNano", "small": "RFDETRSmall", "base": "RFDETRBase"}
 
 CONF_THRESHOLD = 0.001
-MAX_DET = 300
 
 
 def git_rev() -> str:
@@ -46,99 +44,6 @@ def git_rev() -> str:
         ).strip()
     except Exception:
         return "unknown"
-
-
-def _predict(model, path: str, threshold: float, state: dict):
-    """predict() z obejsciem niespojnosci rfdetr co do rozdzielczosci.
-
-    RF-DETR base ma patch 14 i 4 okna, czyli blok 56, a ``train`` przyjmuje
-    rozdzielczosc 640, ktora przez 56 sie nie dzieli. ``predict`` to odrzuca,
-    wiec model da sie nauczyc, a potem nie da sie go uzyc. Przy pierwszym takim
-    bledzie wyliczamy najblizszy zgodny ksztalt i trzymamy go dla reszty biegu.
-
-    To ODSTEPSTWO od protokolu: wnioskowanie idzie w innej rozdzielczosci niz
-    trening. Zapisywane w metrics.json jako `inference_shape_override`, zeby
-    wiersz nie udawal porownywalnego z biegami, ktore maja obie te same.
-    """
-    shape = state.get("shape")
-    if shape is not None:
-        return model.predict(path, threshold=threshold, shape=shape)
-    try:
-        return model.predict(path, threshold=threshold)
-    except ValueError as exc:
-        m = re.search(r"block_size=(\d+)", str(exc))
-        if not m:
-            raise
-        block = int(m.group(1))
-        res = state["resolution"]
-        cand = max(block, round(res / block) * block)
-        state["shape"] = (cand, cand)
-        print(
-            f"\n[predict] UWAGA: rozdzielczosc {res} nie dzieli sie przez {block} — "
-            f"biblioteka odmawia wnioskowania. Przechodze na {cand}. Trening byl "
-            f"na {res}, wiec ten wiersz NIE jest wprost porownywalny z biegami, "
-            f"gdzie trening i wnioskowanie maja te sama rozdzielczosc."
-        )
-        return model.predict(path, threshold=threshold, shape=state["shape"])
-
-
-def build_predictions(model, files, id_of, out_path: Path, threshold: float,
-                      valid_ids: set[int], resolution: int,
-                      out_state: dict | None = None) -> Path:
-    """Predykcje w formacie COCO detection results, w ukladzie wspolrzednych GT."""
-    import numpy as np
-    from PIL import Image
-    from tqdm import tqdm
-
-    results = []
-    seen_class_ids: set[int] = set()
-    dropped: dict[int, int] = {}
-    state = out_state if out_state is not None else {}
-    state.setdefault("resolution", resolution)
-    state.setdefault("shape", None)
-    for p in tqdm(files, desc="predict", unit="img"):
-        img_id, gt_w, gt_h = id_of[p.name]
-        with Image.open(p) as im:
-            src_w, src_h = im.size
-        sx, sy = gt_w / src_w, gt_h / src_h
-
-        det = _predict(model, str(p), threshold, state)
-        if det is None or len(det) == 0:
-            continue
-        xyxy = np.asarray(det.xyxy)
-        cls = np.asarray(det.class_id).astype(int)
-        conf = np.asarray(det.confidence)
-        order = np.argsort(-conf)[:MAX_DET]
-        for i in order:
-            x1, y1, x2, y2 = xyxy[i]
-            raw = int(cls[i])
-            seen_class_ids.add(raw)
-            # RF-DETR indeksuje klasy OD ZERA, a COCO od jedynki — ustalone
-            # empirycznie: przy progu 0,25 rozklad klas 0..5 pokrywa sie z
-            # rozkladem GT co do dziesiatych procenta (85,1% vs 85,2% dla
-            # human). Model zwraca tez sporadyczna klase o indeksie
-            # len(classes), ktora nie odpowiada niczemu i ma znikome score.
-            cat = raw + CATEGORY_ID_OFFSET
-            if cat not in valid_ids:
-                dropped[raw] = dropped.get(raw, 0) + 1
-                continue
-            results.append({
-                "image_id": img_id,
-                "category_id": cat,
-                "bbox": [round(float(x1) * sx, 2), round(float(y1) * sy, 2),
-                         round(float(x2 - x1) * sx, 2), round(float(y2 - y1) * sy, 2)],
-                "score": round(float(conf[i]), 5),
-            })
-
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(json.dumps(results), encoding="utf-8")
-    print(f"[predict] {len(results)} detekcji, surowe class_id modelu: "
-          f"{sorted(seen_class_ids)} -> category_id +{CATEGORY_ID_OFFSET}")
-    if dropped:
-        n = sum(dropped.values())
-        print(f"[predict] odrzucono {n} detekcji o class_id poza zakresem: "
-              f"{ {k: v for k, v in sorted(dropped.items())} }")
-    return out_path
 
 
 def main() -> None:

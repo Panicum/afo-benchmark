@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Iterable
 
 from .dataset import AFODataset
+from .download import output_root
 
 #: identyfikatory kategorii COCO licza sie od 1; klasa 0 z AFO to kategoria 1
 CATEGORY_ID_OFFSET = 1
@@ -135,13 +136,14 @@ def export_coco(
 ) -> Path:
     """Eksportuje jeden podzial do pliku COCO JSON i zwraca jego sciezke.
 
-    Domyslne miejsce zapisu: ``<cache>/coco/<split>.json`` — w cache, nie w repo.
+    Domyslne miejsce zapisu: ``<output_root>/coco/<split>.json`` — nigdy w repo
+    i nigdy w korzeniu zbioru, jesli ten jest tylko do odczytu (Kaggle).
     """
     ds = AFODataset(split=split, root=root, clip=clip, categories=categories)
     coco = build_coco(ds, progress=progress)
 
     if out_path is None:
-        out_path = ds.root / "coco" / f"{ds.split}.json"
+        out_path = output_root(root) / "coco" / f"{ds.split}.json"
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(coco), encoding="utf-8")
