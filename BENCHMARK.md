@@ -1,8 +1,8 @@
-# AFO detection benchmark — protocol
+# AFO detection benchmark - protocol
 
-This file is the contract. It is written **before** any model is trained, and every result in the leaderboard follows it. A result that deviates in any respect is not comparable and is not merged — see [CONTRIBUTING.md](CONTRIBUTING.md).
+This file is the contract. It is written **before** any model is trained, and every result in the leaderboard follows it. A result that deviates in any respect is not comparable and is not merged - see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-Status: **protocol fixed, 18 runs complete, matrix unfinished.** What is done and what is missing is listed in the README's Status table — including the FPS column, which is empty because the measurement protocol changed and the new pass has not been run. The leaderboard lives in [README.md](README.md).
+Status: **protocol fixed, 18 runs complete, matrix unfinished.** What is done and what is missing is listed in the README's Status table - including the FPS column, which is empty because the measurement protocol changed and the new pass has not been run. The leaderboard lives in [README.md](README.md).
 
 ---
 
@@ -36,7 +36,7 @@ Collapsing a 6-class model's predictions into the two-class scheme is recorded u
 
 ### Pre-resizing (applies to every run)
 
-AFO images are 2.5K–4K. Training at `imgsz=640` with default mosaic augmentation decodes four source JPEGs per sample, which makes the pipeline **CPU-bound on JPEG decode, not GPU-bound** — measured: `yolo11n` and `yolo11m` differ by 13% per epoch despite a ~7× difference in FLOPs.
+AFO images are 2.5K–4K. Training at `imgsz=640` with default mosaic augmentation decodes four source JPEGs per sample, which makes the pipeline **CPU-bound on JPEG decode, not GPU-bound** - measured: `yolo11n` and `yolo11m` differ by 13% per epoch despite a ~7× difference in FLOPs.
 
 Every image is therefore resized **once, offline**, to a longest side of **1280 px** (`cv2.INTER_AREA`, JPEG quality 95) by `python -m afo.yolo --max-side 1280`. This cut epoch time from 145 s to 78 s and the dataset from 4.5 GB to 1.1 GB.
 
@@ -46,14 +46,14 @@ Labels are normalised, so they are unchanged. Both benchmark resolutions (640 an
 
 The test split contains **zero background images** (train has 720, val 8). It is tempting to conclude that false alarms on water therefore go unmeasured. That conclusion is wrong.
 
-This is detection, not classification. Every detection that matches no ground-truth box counts as a false positive and lowers precision, regardless of whether the frame contains other objects. The median AFO object covers 0.085% of its frame, so the test split is overwhelmingly open water by area — there is no shortage of water on which a detector can be caught firing. mAP penalises wave-crest detections correctly.
+This is detection, not classification. Every detection that matches no ground-truth box counts as a false positive and lowers precision, regardless of whether the frame contains other objects. The median AFO object covers 0.085% of its frame, so the test split is overwhelmingly open water by area - there is no shortage of water on which a detector can be caught firing. mAP penalises wave-crest detections correctly.
 
 What the absence of empty frames actually costs is narrower and worth stating precisely:
 
 1. **The operational figure is not measured directly.** "How many false alarms will an operator see per patrol frame" is naturally expressed on frames with nothing in them, and there are none in test. It is estimable from the annotated frames, which is what the operating-point diagnostic in §4 does.
-2. **mAP is threshold-free; deployment is not.** AP integrates over the whole precision-recall curve. A fielded SAR system runs at one confidence threshold, and the thing that decides whether an operator trusts it — false alarms per frame at that threshold — is invisible in AP. This gap is real and has nothing to do with background images; it would exist even if test were half empty frames.
+2. **mAP is threshold-free; deployment is not.** AP integrates over the whole precision-recall curve. A fielded SAR system runs at one confidence threshold, and the thing that decides whether an operator trusts it - false alarms per frame at that threshold - is invisible in AP. This gap is real and has nothing to do with background images; it would exist even if test were half empty frames.
 
-Training uses the full official train split, background images included — 25.8% of it is free negative supervision, and removing it would deviate from the protocol.
+Training uses the full official train split, background images included - 25.8% of it is free negative supervision, and removing it would deviate from the protocol.
 
 ---
 
@@ -68,7 +68,7 @@ All initialised from **COCO-pretrained** weights. No AFO-specific architecture c
 | RF-DETR | nano, small, base | `rfdetr` |
 | RT-DETR | l | `ultralytics` (optional) |
 
-**Resolution:** `imgsz=640` for every model. Additionally `imgsz=1280` for the best YOLO and the best RF-DETR by val mAP50-95 — AFO objects are small relative to the frame, so input resolution is expected to be the single largest factor, and the benchmark is designed to show that.
+**Resolution:** `imgsz=640` for every model. Additionally `imgsz=1280` for the best YOLO and the best RF-DETR by val mAP50-95 - AFO objects are small relative to the frame, so input resolution is expected to be the single largest factor, and the benchmark is designed to show that.
 
 ---
 
@@ -81,14 +81,14 @@ All initialised from **COCO-pretrained** weights. No AFO-specific architecture c
 - **Batch size:** the largest power of two whose **measured peak allocation stays under 85% of physical VRAM**, probed per run and recorded in `train_config.yaml`. Gradient accumulation for RF-DETR at 1280 where needed.
 - **Augmentation:** each framework's **defaults**, unchanged. The exact resolved values are dumped into `results/<run>/train_config.yaml` so "defaults" is never an unverifiable claim. For Ultralytics these resolve to `mosaic=1.0` (closed for the last 10 epochs), `scale=0.5`, `translate=0.1`, `fliplr=0.5`, `flipud=0.0`, `hsv_h=0.015`, `hsv_s=0.7`, `hsv_v=0.4`, `erasing=0.4`, `mixup=0.0`, `copy_paste=0.0`, `degrees=0.0`.
 - **No per-model tuning.** The protocol is identical for everyone; a model that underperforms under it underperforms in the table.
-- **One run per model**, with one exception: the model that ends up at the **top of each leaderboard is re-run with three seeds**, so the headline number carries a spread instead of resting on a single draw. Everything else is single-seed, and single-seed differences below roughly 1 mAP point should not be read as real. (Observed: `yolo11n` and `yolov8n` at 640 differ by 0.16 points — that is a tie, not a ranking.)
+- **One run per model**, with one exception: the model that ends up at the **top of each leaderboard is re-run with three seeds**, so the headline number carries a spread instead of resting on a single draw. Everything else is single-seed, and single-seed differences below roughly 1 mAP point should not be read as real. (Observed: `yolo11n` and `yolov8n` at 640 differ by 0.16 points - that is a tie, not a ranking.)
 - **Both arms use the identical recipe.** The only difference between a 6-class and a 2-class run is `--categories`.
 
 ### Why batch size is capped by measurement, not by OOM
 
 On Windows the NVIDIA driver does **not** raise `OutOfMemoryError` when an allocation exceeds VRAM. It silently moves the excess to system RAM and streams tensors over PCIe. The run completes, reports no error, and is several times slower.
 
-Measured on this project: RF-DETR base at 640 requested **22.8 GB on a 16 GB card** at batch 16 and took **2812 s/epoch against 437 s at batch 4** — 6.4× slower, with no warning of any kind. A budget built from that measurement would have been wrong by hours per model.
+Measured on this project: RF-DETR base at 640 requested **22.8 GB on a 16 GB card** at batch 16 and took **2812 s/epoch against 437 s at batch 4** - 6.4× slower, with no warning of any kind. A budget built from that measurement would have been wrong by hours per model.
 
 So: "fits" means *measured peak ≤ 85% of physical VRAM*, never *no exception was raised*. This is enforced in [`afo/vram.py`](afo/vram.py), used by both the batch probe and the training scripts, and `scripts/estimate_budget.py` discards any calibration row whose peak exceeded physical VRAM.
 
@@ -101,13 +101,13 @@ One evaluator for every model: `afo/evaluate.py`, pycocotools against `~/.cache/
 Reported per run:
 
 - **mAP50**, **mAP50-95** (COCO primary metric, averaged over the 6 classes)
-- **per-class AP50-95** — mandatory, because `human` is 83% of objects and a good mAP can hide four dead classes
-- **AP by object size** — see below
+- **per-class AP50-95** - mandatory, because `human` is 83% of objects and a good mAP can hide four dead classes
+- **AP by object size** - see below
 - **params (M)**, **GFLOPs**
 
-**Detections per image: 300, not COCO's 100.** AFO is dense — up to 94 objects in one image, and 304 images hold 40 or more. At a cap of 100, a handful of confident false positives can push true positives past the cut and depress recall. `mAP50-95` at the COCO cap of 100 is reported alongside as `mAP50_95_maxdets100`.
+**Detections per image: 300, not COCO's 100.** AFO is dense - up to 94 objects in one image, and 304 images hold 40 or more. At a cap of 100, a handful of confident false positives can push true positives past the cut and depress recall. `mAP50-95` at the COCO cap of 100 is reported alongside as `mAP50_95_maxdets100`.
 
-### Size buckets — a fixed reference scale
+### Size buckets - a fixed reference scale
 
 Every image is rescaled to a **640 px longest side** before its boxes are bucketed. The scale is a constant of the benchmark (`afo.evaluate.REFERENCE_SIDE`) and is **deliberately independent of the resolution the model was trained at**:
 
@@ -124,7 +124,7 @@ Every image is rescaled to a **640 px longest side** before its boxes are bucket
 
 COCO's standard `AP-S` / `AP-M` / `AP-L` (native pixels, 32²/96² thresholds) are reported alongside for comparability with other papers, with the caveat that on AFO they degenerate to "almost everything is M or L".
 
-### Operating point — the number AP hides
+### Operating point - the number AP hides
 
 `mAP` integrates over the whole precision-recall curve. A deployed SAR system runs at **one** confidence threshold, and what decides whether an operator keeps the system switched on is how often it cries wolf at that threshold. AP cannot show this.
 
@@ -133,9 +133,9 @@ Every run therefore also reports `operating_point` in `metrics.json`: the confid
 Reported alongside the F1-optimal point:
 
 - **False alarms per image at 80% and 90% recall.** F1 weights a miss and a false alarm equally; a missed person in the water does not cost the same as one spurious box, so the operator's question is "what does this cost me at the sensitivity I need". On the models measured so far neither target is reachable at all, which is itself the answer.
-- **The recall ceiling** — the highest recall attainable as the threshold goes to zero. Objects above it are never detected at any confidence and no threshold tuning recovers them. On AFO at 640 this sits at **73–77%**, so between 1,700 and 2,100 of the 7,639 test objects are simply not found.
+- **The recall ceiling** - the highest recall attainable as the threshold goes to zero. Objects above it are never detected at any confidence and no threshold tuning recovers them. On AFO at 640 this sits at **73–77%**, so between 1,700 and 2,100 of the 7,639 test objects are simply not found.
 
-Two caveats that keep it honest. The thresholds are chosen on the *test* split, so these are upper bounds — a deployed threshold would be picked on val. And matching is class-agnostic, which means this diagnostic weights **objects** while mAP weights **classes**; with `human` at 85% of test objects the two can rank models differently, and both rankings are correct answers to different questions.
+Two caveats that keep it honest. The thresholds are chosen on the *test* split, so these are upper bounds - a deployed threshold would be picked on val. And matching is class-agnostic, which means this diagnostic weights **objects** while mAP weights **classes**; with `human` at 85% of test objects the two can rank models differently, and both rankings are correct answers to different questions.
 
 ---
 
@@ -160,7 +160,7 @@ reporting none. `scripts/benchmark_fps.py` exists and works; it needs a dedicate
 
 **An interrupted run is not a lost run.** Ultralytics writes `best.pt` continuously and RF-DETR writes `checkpoint_best_ema.pth`; either is enough to produce every metric in this protocol without training again. Finish it with `python scripts/recover_run.py --run-all`, which finds runs that have weights but no `metrics.json` and completes them through `--post-only`.
 
-**Never delete `results/_runs/<run>/` to "clean up" after an interruption.** The weights are the only expensive artefact a run produces — everything else is minutes of CPU. This rule is written down because it was learned the hard way: an `rtdetr-l` run stopped at epoch 88 of 100 was deleted as cleanup, discarding 4.7 h of GPU time that `--post-only` would have turned into a finished row in under a minute.
+**Never delete `results/_runs/<run>/` to "clean up" after an interruption.** The weights are the only expensive artefact a run produces - everything else is minutes of CPU. This rule is written down because it was learned the hard way: an `rtdetr-l` run stopped at epoch 88 of 100 was deleted as cleanup, discarding 4.7 h of GPU time that `--post-only` would have turned into a finished row in under a minute.
 
 Per run, committed to the repository:
 
@@ -172,7 +172,7 @@ results/<model>_<imgsz>/
   log.txt               training and evaluation log
 ```
 
-Checkpoints are **not** committed. Each best checkpoint is uploaded to Hugging Face as `jgasienica/afo-<model>-<imgsz>` with a model card stating the dataset, this protocol, the metrics, the training command, and the licence note: *trained on CC BY-NC-SA data — non-commercial use only*.
+Checkpoints are **not** committed. Each best checkpoint is uploaded to Hugging Face as `jgasienica/afo-<model>-<imgsz>` with a model card stating the dataset, this protocol, the metrics, the training command, and the licence note: *trained on CC BY-NC-SA data - non-commercial use only*.
 
 ---
 
@@ -180,17 +180,17 @@ Checkpoints are **not** committed. Each best checkpoint is uploaded to Hugging F
 
 - Ranking is by **test mAP50-95**. Differences under ~1 point are within single-seed noise and should not be called a win.
 - `human` dominates the object count, so **mAP is not a summary of SAR usefulness**. Read per-class AP.
-- mAP does penalise false alarms on water (§1) — but it is threshold-free. For the operating-point view, read `operating_point` in `metrics.json`: the F1-optimal threshold and the false alarms per image at it.
+- mAP does penalise false alarms on water (§1) - but it is threshold-free. For the operating-point view, read `operating_point` in `metrics.json`: the F1-optimal threshold and the false alarms per image at it.
 - FPS is from one laptop GPU; use it for relative comparison between rows, not as an absolute capability claim. Each row records the temperature and SM clock it was measured at.
-- **At batch 1 the small models are overhead-bound, not compute-bound.** Preprocessing, the Python call and NMS dominate, so `n` and `s` can land within a few FPS of each other despite a 3.5× difference in parameters. That is a property of *this* measurement — batch 1, this GPU, this framework — and not a general claim that the bigger model is free. At larger batch, or on a device where compute dominates, the gap reappears. Read the FPS column as "what this laptop does, one frame at a time", which is the SAR case, and nothing wider.
+- **At batch 1 the small models are overhead-bound, not compute-bound.** Preprocessing, the Python call and NMS dominate, so `n` and `s` can land within a few FPS of each other despite a 3.5× difference in parameters. That is a property of *this* measurement - batch 1, this GPU, this framework - and not a general claim that the bigger model is free. At larger batch, or on a device where compute dominates, the gap reappears. Read the FPS column as "what this laptop does, one frame at a time", which is the SAR case, and nothing wider.
 - **A better model on mAP can be the worse model at an operating point.** `yolov8s` leads mAP50-95 and emits the most false alarms per image of the three measured so far. Decide which of the two questions you are asking before quoting a winner.
 
 ---
 
-## 8. TODO — explicitly out of scope for this phase
+## 8. TODO - explicitly out of scope for this phase
 
 - [ ] **Seed-variance study across the whole matrix.** Only the top model of each arm gets three seeds; the rest are single-seed, so mid-table gaps under ~1 point remain indistinguishable from noise.
-- [ ] **A background-only evaluation set.** Not because false alarms are unmeasurable without it — they are measured, see §1 and the operating-point diagnostic — but because "false alarms per empty patrol frame" is the figure an operator reasons with, and reporting it directly beats estimating it. The 720 train background images are the obvious source, but using them deviates from the official split, so it needs its own protocol. A good requirement for a future AFO v2: empty frames in the test split.
+- [ ] **A background-only evaluation set.** Not because false alarms are unmeasurable without it - they are measured, see §1 and the operating-point diagnostic - but because "false alarms per empty patrol frame" is the figure an operator reasons with, and reporting it directly beats estimating it. The 720 train background images are the obvious source, but using them deviates from the official split, so it needs its own protocol. A good requirement for a future AFO v2: empty frames in the test split.
 - [ ] **A de-duplicated split variant**, quantifying what the 7 cross-split duplicate pairs (one of them val↔test) are worth.
 - [ ] **A one-class arm** on `1category/`, the third label set the dataset ships. Pure "is there anything in the water", the weakest-supervision version of the task.
 - [ ] **Cross-dataset generalisation** to SeaDronesSee and MOBDrone.

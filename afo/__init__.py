@@ -1,4 +1,4 @@
-"""afo — loader, eksport COCO i benchmark dla zbioru AFO (Aerial dataset of Floating Objects).
+"""afo - loader, eksport COCO i benchmark dla zbioru AFO (Aerial dataset of Floating Objects).
 
 Zbior kanoniczny: https://huggingface.co/datasets/jgasienica/afo-dataset
 Praca: Gasienica-Jozkowy, Knapik, Cyganek, ICAE 28(3) 2021, doi:10.3233/ICA-210649

@@ -5,7 +5,7 @@
     <out>/test/_annotations.coco.json  + obrazy
 
 UWAGA: jesli obrazy sa przeskalowane (patrz ``afo.yolo``), JSON musi zawierac
-ICH wymiary, a nie wymiary oryginalu — inaczej ramki w pikselach rozjada sie o
+ICH wymiary, a nie wymiary oryginalu - inaczej ramki w pikselach rozjada sie o
 wspolczynnik skali. Dlatego rozmiary czytane sa z plikow, ktore faktycznie leza
 w katalogu wyjsciowym, a nie ze snapshotu HF.
 """
@@ -34,7 +34,7 @@ def prepare_rfdetr(
     """Buduje uklad dla rfdetr i zwraca katalog glowny.
 
     ``images_from`` wskazuje gotowy katalog ``images/<split>`` (np. z
-    ``afo.yolo`` po przeskalowaniu). Gdy None — uzywane sa oryginaly.
+    ``afo.yolo`` po przeskalowaniu). Gdy None - uzywane sa oryginaly.
     """
     root = dataset_root(root)
     src_base = Path(images_from) if images_from else None
@@ -96,7 +96,7 @@ def prepare_rfdetr(
         if len(annotations) != ds.num_objects():
             print(
                 f"  UWAGA: loader ma {ds.num_objects()} obiektow, zapisano "
-                f"{len(annotations)} — roznica {ds.num_objects() - len(annotations)} "
+                f"{len(annotations)} - roznica {ds.num_objects() - len(annotations)} "
                 f"(ramki o zerowej powierzchni)"
             )
 

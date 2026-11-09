@@ -10,10 +10,10 @@ The leaderboard is only worth reading if every row was produced the same way. Th
 
 There are **two leaderboards** and they are different tasks:
 
-- **6 classes** (`6categories/`) — the default. `results/<model>_<imgsz>/`.
-- **2 classes** (`2categories/`, `small_obj` vs `large_obj`) — the version the 2021 paper benchmarked. `results/<model>_<imgsz>_2cat/`, trained with `--categories 2categories`.
+- **6 classes** (`6categories/`) - the default. `results/<model>_<imgsz>/`.
+- **2 classes** (`2categories/`, `small_obj` vs `large_obj`) - the version the 2021 paper benchmarked. `results/<model>_<imgsz>_2cat/`, trained with `--categories 2categories`.
 
-Submit to whichever you ran. Do **not** submit a 6-class model's predictions collapsed into two classes as a two-class row — that is a different experiment and it scores about half a point of AP lower. The collapse is recorded automatically under `two_category` in every 6-class `metrics.json` and that is where it belongs.
+Submit to whichever you ran. Do **not** submit a 6-class model's predictions collapsed into two classes as a two-class row - that is a different experiment and it scores about half a point of AP lower. The collapse is recorded automatically under `two_category` in every 6-class `metrics.json` and that is where it belongs.
 
 ## What a submission contains
 
@@ -45,7 +45,7 @@ python -m afo.yolo --max-side 1280              # Ultralytics layout
 python scripts/train_ultralytics.py --model yolo11s --imgsz 640
 ```
 
-For a framework this repo does not wrap, train however you like — but the protocol constraints are not negotiable, and `train_config.yaml` has to show that you met them.
+For a framework this repo does not wrap, train however you like - but the protocol constraints are not negotiable, and `train_config.yaml` has to show that you met them.
 
 **3. Evaluate with the shared evaluator.** Do not report numbers from your framework's own validation routine. Ultralytics mAP and pycocotools mAP are not the same number, and a table mixing them is meaningless.
 
@@ -73,7 +73,7 @@ python scripts/make_leaderboard.py
 ## What gets a submission rejected
 
 - **Numbers from a different evaluator.** Must be `afo/evaluate.py`.
-- **A modified split.** No re-splitting, no de-duplication, no dropping the background images, no "cleaned" variant. Those are interesting experiments — they just are not this table. Open an issue instead.
+- **A modified split.** No re-splitting, no de-duplication, no dropping the background images, no "cleaned" variant. Those are interesting experiments - they just are not this table. Open an issue instead.
 - **Test-time augmentation, multi-scale inference or ensembling.** The protocol says none.
 - **Test used for model selection.** Selection is on val. If you tried several configurations and picked by test score, the number is not comparable and the PR will say so.
 - **No recipe.** A `metrics.json` without the configuration that produced it.
@@ -82,12 +82,12 @@ python scripts/make_leaderboard.py
 ## What is welcome
 
 - New architectures, including ones nobody has tried on maritime SAR imagery.
-- Results on other hardware — a second FPS column for a different GPU is useful.
+- Results on other hardware - a second FPS column for a different GPU is useful.
 - **Negative results.** A model that underperforms under this protocol is a real finding, and the table is more honest for containing it.
 - Fixes to the protocol itself. If something in BENCHMARK.md measures the wrong thing, that is a bug worth more than any single row.
 
 ## Reporting a data problem
 
-AFO as released has known issues — 29 out-of-range coordinate lines, 11 duplicate image pairs, 729 background images, a `bouy` typo. They are documented in the README and asserted in `tests/test_counts.py`, deliberately **not** fixed in place.
+AFO as released has known issues - 29 out-of-range coordinate lines, 11 duplicate image pairs, 729 background images, a `bouy` typo. They are documented in the README and asserted in `tests/test_counts.py`, deliberately **not** fixed in place.
 
 If you find something new, open an issue with the affected filenames. Do not submit a PR that edits the dataset: the benchmark evaluates AFO as everyone else receives it, and a silent fix here would make every published number incomparable.

@@ -12,7 +12,7 @@ rozmiaru dziala w wybranej skali.
 
 Osobno liczona jest diagnostyka PUNKTU PRACY: mAP jest bezprogowe, a wdrozenie
 SAR chodzi na jednym progu ufnosci. ``operating_point`` podaje prog
-maksymalizujacy F1 oraz liczbe falszywych alarmow na obraz przy tym progu —
+maksymalizujacy F1 oraz liczbe falszywych alarmow na obraz przy tym progu -
 liczbe, ktorej z AP nie widac.
 """
 
@@ -30,7 +30,7 @@ import numpy as np
 #:
 #: Kluczowa decyzja: skala jest STALA i niezalezna od imgsz, z jakim model byl
 #: uczony. Gdyby kubelki liczyc w pikselach wejscia modelu, ten sam obiekt
-#: bylby "tiny" przy 640 i "small" przy 1280 — czyli AP-tiny z dwoch biegow
+#: bylby "tiny" przy 640 i "small" przy 1280 - czyli AP-tiny z dwoch biegow
 #: opisywaloby inne populacje i nie dalo sie ich porownac. A porownanie 640
 #: wobec 1280 jest calym sensem tych biegow.
 #:
@@ -54,7 +54,7 @@ COCO_BUCKETS: tuple[tuple[str, float, float], ...] = (
 )
 
 #: maksimum detekcji na obraz. AFO bywa gesty (do 94 obiektow), wiec 100 z COCO
-#: potrafi obcinac recall — raportujemy oba.
+#: potrafi obcinac recall - raportujemy oba.
 MAX_DETS_PRIMARY = 300
 MAX_DETS_COCO = 100
 
@@ -117,7 +117,7 @@ def operating_point(
 ) -> dict[str, Any]:
     """Prog ufnosci maksymalizujacy F1 i liczba falszywych alarmow na obraz.
 
-    Po co, skoro jest mAP: AP jest BEZPROGOWE — calkuje po calej krzywej
+    Po co, skoro jest mAP: AP jest BEZPROGOWE - calkuje po calej krzywej
     precision-recall. Wdrozony system SAR chodzi na jednym, konkretnym progu,
     i wtedy liczy sie "ile razy na kadr detektor pokaze cos, czego nie ma".
     Tej liczby w AP nie widac, a to ona decyduje, czy operator ufa systemowi.
@@ -219,21 +219,21 @@ def operating_point(
         "missed_objects": ceiling["fn"],
         "note": (
             "Najwyzszy osiagalny recall, przy progu zbiegajacym do zera. Obiekty "
-            "ponad ten sufit nie sa znajdowane przy ZADNEJ ufnosci — zadne "
+            "ponad ten sufit nie sa znajdowane przy ZADNEJ ufnosci - zadne "
             "strojenie progu ich nie odzyska."
         ),
     }
 
     out["note"] = (
-        "Progi dobrane na zbiorze TESTOWYM — to gorne ograniczenia, bo wybrane na "
+        "Progi dobrane na zbiorze TESTOWYM - to gorne ograniczenia, bo wybrane na "
         "tych samych danych, na ktorych mierzone. Do wdrozenia prog dobiera sie na "
         "walidacji. Dopasowanie BEZ rozroznienia klas, wiec ta diagnostyka wazy "
-        "obiektami, podczas gdy mAP wazy klasami — przy 85% udziale klasy human "
+        "obiektami, podczas gdy mAP wazy klasami - przy 85% udziale klasy human "
         "obie moga dac inna kolejnosc modeli i obie sa poprawne."
     )
     if return_curve:
         # Pelna krzywa nie trafia do metrics.json (100 punktow na bieg to szum
-        # w pliku, ktory ma byc czytelny) — tylko na zadanie, dla wykresow.
+        # w pliku, ktory ma byc czytelny) - tylko na zadanie, dla wykresow.
         out["curve"] = curve
     return out
 
@@ -252,7 +252,7 @@ def evaluate(
     gt_json : COCO JSON zbioru testowego (z ``scripts/export_coco.py``)
     dt_json : predykcje w formacie COCO detection results
     imgsz   : rozdzielczosc wejscia modelu. Zapisywana w wyniku jako metadana;
-              NIE wplywa na kubelki rozmiaru — te licza sie zawsze w skali
+              NIE wplywa na kubelki rozmiaru - te licza sie zawsze w skali
               referencyjnej REFERENCE_SIDE, zeby byly porownywalne miedzy
               biegami o roznym imgsz.
     """
@@ -286,7 +286,7 @@ def evaluate(
 
     if dt is None or not dets:
         if verbose:
-            print("BRAK DETEKCJI — wszystkie metryki zerowe.")
+            print("BRAK DETEKCJI - wszystkie metryki zerowe.")
         result["empty_predictions"] = True
         return result
 
@@ -343,7 +343,7 @@ def evaluate(
             e2.evaluate()
             e2.accumulate()
 
-        # liczebnosc GT w kazdym kubelku — liczba zawsze obok metryki
+        # liczebnosc GT w kazdym kubelku - liczba zawsze obok metryki
         counts = dict.fromkeys((b[0] for b in AFO_BUCKETS), 0)
         for ann in gt_s.anns.values():
             side = float(np.sqrt(max(ann["area"], 0.0)))
@@ -368,7 +368,7 @@ def evaluate(
             f"i SA porownywalne miedzy 640 a 1280."
         )
 
-    # diagnostyka punktu pracy — liczba, ktorej mAP nie pokazuje
+    # diagnostyka punktu pracy - liczba, ktorej mAP nie pokazuje
     try:
         result["operating_point"] = operating_point(
             json.loads(gt_json.read_text(encoding="utf-8")), dets
@@ -382,8 +382,8 @@ def evaluate(
 
 
 def print_report(r: dict[str, Any]) -> None:
-    """Czytelny raport na stdout — kazda metryka z liczebnoscia."""
-    print(f"\n=== AFO test — {Path(r['dt_json']).name} (imgsz={r['imgsz']}) ===")
+    """Czytelny raport na stdout - kazda metryka z liczebnoscia."""
+    print(f"\n=== AFO test - {Path(r['dt_json']).name} (imgsz={r['imgsz']}) ===")
     print(f"obrazow {r['n_images']}, obiektow GT {r['n_gt_objects']}, detekcji {r['n_detections']}")
     if r.get("empty_predictions"):
         print("BRAK DETEKCJI")
@@ -399,14 +399,14 @@ def print_report(r: dict[str, Any]) -> None:
         ref = r.get("afo_buckets_reference_side", REFERENCE_SIDE)
         print(f"\nKubelki AFO (stala skala referencyjna: dluzszy bok {ref} px):")
         for name, d in r["afo_buckets"].items():
-            ap = "   —  " if np.isnan(d["AP50_95"]) else f"{d['AP50_95']:.4f}"
+            ap = "   -  " if np.isnan(d["AP50_95"]) else f"{d['AP50_95']:.4f}"
             print(f"  {name:8s} AP50-95 {ap}   n={d['n_gt']:5d}")
-        print("  Skala stala — porownywalne miedzy biegami o roznym imgsz.")
+        print("  Skala stala - porownywalne miedzy biegami o roznym imgsz.")
 
     print("\nStandardowe COCO (piksele oryginalu, dla porownania z innymi pracami):")
     for b, _, _ in COCO_BUCKETS:
         v = r.get(f"AP_{b}_coco", float("nan"))
-        print(f"  AP-{b}  {'  —  ' if np.isnan(v) else f'{v:.4f}'}")
+        print(f"  AP-{b}  {'  -  ' if np.isnan(v) else f'{v:.4f}'}")
 
     if "operating_point" in r:
         op = r["operating_point"]
@@ -441,7 +441,7 @@ def evaluate_two_category(
 
     UWAGA na interpretacje: to NIE jest model uczony na dwoch klasach. To model
     6-klasowy, ktorego predykcje i GT scalono po fakcie. Daje liczbe o tej samej
-    DEFINICJI KLAS co praca, ale nie o tym samym treningu — model nadal placil
+    DEFINICJI KLAS co praca, ale nie o tym samym treningu - model nadal placil
     za rozroznianie szesciu kategorii. Traktowac jako dolne oszacowanie.
     """
     import json as _json
@@ -465,12 +465,12 @@ def evaluate_two_category(
     dt_p.write_text(_json.dumps(dt), encoding="utf-8")
 
     r = evaluate(gt_p, dt_p, imgsz=imgsz, verbose=False)
-    # sciezki wskazuja katalog tymczasowy — zastepujemy opisem zrodla
+    # sciezki wskazuja katalog tymczasowy - zastepujemy opisem zrodla
     r["gt_json"] = f"{_portable(gt_json)} (scalone do 2 klas)"
     r["dt_json"] = f"{_portable(dt_json)} (scalone do 2 klas)"
     r["categories"] = "2 (small_obj = human+bouy; large_obj = board/boat/sailboat/kayak)"
     r["caveat"] = (
-        "Model uczony na 6 klasach, predykcje scalone po fakcie — nie to samo, "
+        "Model uczony na 6 klasach, predykcje scalone po fakcie - nie to samo, "
         "co trening na wersji dwuklasowej."
     )
     if verbose:

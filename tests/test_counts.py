@@ -1,4 +1,4 @@
-"""Testy spojnosci zbioru AFO — liczby z README musza sie zgadzac z danymi.
+"""Testy spojnosci zbioru AFO - liczby z README musza sie zgadzac z danymi.
 
 Wymagaja pobranego zbioru (``python -m afo.download`` albo AFO_ROOT).
 """
@@ -94,7 +94,7 @@ def test_unlisted_image_absent_from_all_splits(splits):
 
 
 def test_background_image_counts(splits):
-    """Obrazy tla: 720 w train, 8 w val, 0 w test — test nie mierzy falszywych alarmow."""
+    """Obrazy tla: 720 w train, 8 w val, 0 w test - test nie mierzy falszywych alarmow."""
     expected = {"train": 720, "val": 8, "test": 0}
     actual = {s: sum(1 for r in d.records if not r.annotations) for s, d in splits.items()}
     assert actual == expected

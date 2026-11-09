@@ -50,11 +50,11 @@ model-index:
             value: {map50:.4f}
 ---
 
-# AFO — {model} @ {imgsz}{title_suffix}
+# AFO - {model} @ {imgsz}{title_suffix}
 
 `{model}` fine-tuned from COCO-pretrained weights on **[AFO](https://huggingface.co/datasets/jgasienica/afo-dataset)**, a maritime search-and-rescue dataset of 3,641 drone images with 39,991 hand-annotated objects.{task_sentence}
 
-Produced by the reproducible benchmark at **[github.com/Panicum/afo-benchmark](https://github.com/Panicum/afo-benchmark)** under the protocol in [`BENCHMARK.md`](https://github.com/Panicum/afo-benchmark/blob/main/BENCHMARK.md). Every number below is measured on the **official test split** with one shared pycocotools evaluator, so it is comparable to every other row of that leaderboard — and to nothing else.
+Produced by the reproducible benchmark at **[github.com/Panicum/afo-benchmark](https://github.com/Panicum/afo-benchmark)** under the protocol in [`BENCHMARK.md`](https://github.com/Panicum/afo-benchmark/blob/main/BENCHMARK.md). Every number below is measured on the **official test split** with one shared pycocotools evaluator, so it is comparable to every other row of that leaderboard - and to nothing else.
 
 ## Results on the AFO test split
 
@@ -108,7 +108,7 @@ Every image is rescaled to a **fixed 640 px longest side** before bucketing, bec
 ## Limitations
 
 - **The dataset is heavily imbalanced.** Treat the per-class table as the real result; mAP averages over classes with very different support.
-- **One run, one seed.** No variance estimate — differences under roughly 1 mAP point against another row should not be read as real.
+- **One run, one seed.** No variance estimate - differences under roughly 1 mAP point against another row should not be read as real.
 - **Val-to-test gap is large by design.** The test split is drawn from videos absent from train and val, so these numbers describe generalisation to unseen scenes, not unseen frames.
 - Trained on imagery resized to a 1280 px longest side; see BENCHMARK.md §1.
 
@@ -136,15 +136,15 @@ Every image is rescaled to a **fixed 640 px longest side** before bucketing, bec
 BUCKET_RANGE = {"tiny": "< 16²", "small": "16²–32²", "medium": "32²–96²", "large": "> 96²"}
 
 TWO_CAT_NOTE = (
-    "The two classes are the **semantic merge from Table 2 of the original paper** — "
-    "`small_obj` = human + buoy, `large_obj` = board + boat + sailboat + kayak — so this "
+    "The two classes are the **semantic merge from Table 2 of the original paper** - "
+    "`small_obj` = human + buoy, `large_obj` = board + boat + sailboat + kayak - so this "
     "model's numbers are directly comparable to the published ones. It is a merge by object "
     "kind, not by box area, so `small_obj` is not COCO's AP-small."
 )
 
 
 def slug_of(metrics: dict) -> str:
-    """Nazwa pliku wag i wpisu model-index — ta sama konwencja co repo na HF."""
+    """Nazwa pliku wag i wpisu model-index - ta sama konwencja co repo na HF."""
     suffix = "-2cat" if metrics.get("categories") == "2categories" else ""
     return f"afo-{metrics['model']}-{metrics['imgsz']}{suffix}"
 
@@ -176,7 +176,7 @@ def usage_block(metrics: dict, weights_name: str) -> str:
             shape = f", shape=({s}, {s})"
             # komentarz w osobnej linii, nie w wywolaniu: inline zakomentowalby
             # domykajacy nawias i wklejony kod by sie nie uruchomil
-            note = (f"# this checkpoint rejects {metrics['imgsz']} at inference — "
+            note = (f"# this checkpoint rejects {metrics['imgsz']} at inference - "
                     f"see the note below\n")
         return (
             f"from rfdetr import {cls}\n\n"
@@ -203,7 +203,7 @@ def build_card(metrics: dict, weights_name: str) -> str:
     )
     bk = "\n".join(
         f"| {k} | {BUCKET_RANGE.get(k, '')} | "
-        + ("— (no objects)" if v["n_gt"] == 0 else f"{v['AP50_95']:.4f}")
+        + ("- (no objects)" if v["n_gt"] == 0 else f"{v['AP50_95']:.4f}")
         + f" | {v['n_gt']:,} |"
         for k, v in (metrics.get("afo_buckets") or {}).items()
     )
@@ -224,7 +224,7 @@ def build_card(metrics: dict, weights_name: str) -> str:
             f"\n\nThis checkpoint was **trained at {metrics['imgsz']}** but its `predict()` "
             f"rejects {metrics['imgsz']} as an input shape (the backbone requires a multiple "
             f"of its window size), so every number on this card was measured at "
-            f"**{ovr['inferred_at']}** — pass that shape to reproduce them."
+            f"**{ovr['inferred_at']}** - pass that shape to reproduce them."
         )
 
     script = "train_rfdetr.py" if metrics.get("framework") == "rfdetr" else "train_ultralytics.py"
@@ -287,7 +287,7 @@ def main() -> None:
     card_path = run / "README.md"
     card_path.write_text(card, encoding="utf-8")
     print(f"Karta: {card_path.resolve()}")
-    print(f"Wagi:  {w.resolve() if w else 'BRAK — karta opisuje plik, ktorego nie ma'}")
+    print(f"Wagi:  {w.resolve() if w else 'BRAK - karta opisuje plik, ktorego nie ma'}")
 
     repo = args.repo or metrics.get("weights_hf")
     if not args.push:

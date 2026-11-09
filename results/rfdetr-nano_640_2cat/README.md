@@ -29,11 +29,11 @@ model-index:
             value: 0.8123
 ---
 
-# AFO — rfdetr-nano @ 640 (2-class)
+# AFO - rfdetr-nano @ 640 (2-class)
 
 `rfdetr-nano` fine-tuned from COCO-pretrained weights on **[AFO](https://huggingface.co/datasets/jgasienica/afo-dataset)**, a maritime search-and-rescue dataset of 3,641 drone images with 39,991 hand-annotated objects. Two merged classes, following Table 2 of the original AFO paper.
 
-Produced by the reproducible benchmark at **[github.com/Panicum/afo-benchmark](https://github.com/Panicum/afo-benchmark)** under the protocol in [`BENCHMARK.md`](https://github.com/Panicum/afo-benchmark/blob/main/BENCHMARK.md). Every number below is measured on the **official test split** with one shared pycocotools evaluator, so it is comparable to every other row of that leaderboard — and to nothing else.
+Produced by the reproducible benchmark at **[github.com/Panicum/afo-benchmark](https://github.com/Panicum/afo-benchmark)** under the protocol in [`BENCHMARK.md`](https://github.com/Panicum/afo-benchmark/blob/main/BENCHMARK.md). Every number below is measured on the **official test split** with one shared pycocotools evaluator, so it is comparable to every other row of that leaderboard - and to nothing else.
 
 ## Results on the AFO test split
 
@@ -57,7 +57,7 @@ Produced by the reproducible benchmark at **[github.com/Panicum/afo-benchmark](h
 | tiny | < 16² | 0.3173 | 4,424 |
 | small | 16²–32² | 0.3707 | 2,930 |
 | medium | 32²–96² | 0.5584 | 285 |
-| large | > 96² | — (no objects) | 0 |
+| large | > 96² | - (no objects) | 0 |
 
 Every image is rescaled to a **fixed 640 px longest side** before bucketing, because AFO images are 2.5K–4K and in native pixels the `tiny` bucket would hold 15 objects in the whole dataset. The scale is deliberately independent of the training resolution, so these rows are comparable across runs at different `imgsz`.
 
@@ -96,12 +96,12 @@ detections = model.predict("drone_frame.jpg", threshold=0.25)
 
 Classes, in index order: `small_obj`, `large_obj`.
 
-The two classes are the **semantic merge from Table 2 of the original paper** — `small_obj` = human + buoy, `large_obj` = board + boat + sailboat + kayak — so this model's numbers are directly comparable to the published ones. It is a merge by object kind, not by box area, so `small_obj` is not COCO's AP-small.
+The two classes are the **semantic merge from Table 2 of the original paper** - `small_obj` = human + buoy, `large_obj` = board + boat + sailboat + kayak - so this model's numbers are directly comparable to the published ones. It is a merge by object kind, not by box area, so `small_obj` is not COCO's AP-small.
 
 ## Limitations
 
 - **The dataset is heavily imbalanced.** Treat the per-class table as the real result; mAP averages over classes with very different support.
-- **One run, one seed.** No variance estimate — differences under roughly 1 mAP point against another row should not be read as real.
+- **One run, one seed.** No variance estimate - differences under roughly 1 mAP point against another row should not be read as real.
 - **Val-to-test gap is large by design.** The test split is drawn from videos absent from train and val, so these numbers describe generalisation to unseen scenes, not unseen frames.
 - Trained on imagery resized to a 1280 px longest side; see BENCHMARK.md §1.
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-"""Domyka przerwane biegi z zachowanych wag — zamiast uczyc je od nowa.
+"""Domyka przerwane biegi z zachowanych wag - zamiast uczyc je od nowa.
 
 Po co to istnieje: bieg przerwany po N epokach ma na dysku ``best.pt``
 (Ultralytics) albo ``checkpoint_best_ema.pth`` (RF-DETR) i ten plik w zupelnosci
-wystarczy, zeby policzyc wszystkie metryki — trening nie musi sie powtarzac.
+wystarczy, zeby policzyc wszystkie metryki - trening nie musi sie powtarzac.
 Raz skasowalem takie wagi z 88. epoki "zeby nie mylily kolejki" i wyrzucilem
 4,7 h liczenia; ten skrypt sprawia, ze wlasciwa reakcja jest jedna komenda,
 a nie przypomnienie sobie o fladze ``--post-only``.
@@ -67,7 +67,7 @@ def main() -> None:
     if args.only:
         found = [f for f in found if f[0] in args.only]
     if not found:
-        print("Brak biegow do odzyskania — kazdy katalog w results/_runs ma juz metrics.json.")
+        print("Brak biegow do odzyskania - kazdy katalog w results/_runs ma juz metrics.json.")
         return
 
     print(f"Do odzyskania ({len(found)}):")
@@ -76,7 +76,7 @@ def main() -> None:
         print(f"  {name:28s} {fw:12s} {ckpt.name} ({mb:.0f} MB)")
     if not args.run_all:
         print("\nNic nie zrobione. Dodaj --run-all, zeby je domknac.")
-        print("NIGDY nie kasuj tych katalogow — wagi to jedyny kosztowny artefakt biegu.")
+        print("NIGDY nie kasuj tych katalogow - wagi to jedyny kosztowny artefakt biegu.")
         return
 
     failed = []

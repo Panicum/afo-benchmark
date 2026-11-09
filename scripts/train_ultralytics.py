@@ -4,7 +4,7 @@
 Uczy na train, wybiera po val mAP50-95, raportuje na tescie przez wspolny
 ``afo/evaluate.py``. Zapisuje komplet artefaktow do ``results/<model>_<imgsz>/``.
 
-Batch dobierany sonda przeciw FIZYCZNEMU VRAM, nie przeciw wyjatkowi OOM —
+Batch dobierany sonda przeciw FIZYCZNEMU VRAM, nie przeciw wyjatkowi OOM -
 patrz ``afo/vram.py``.
 """
 
@@ -176,14 +176,14 @@ def main() -> None:
         last = runs_root / run_name / "weights" / "last.pt"
         if args.resume and last.is_file():
             # Ultralytics odtwarza konfiguracje z checkpointu, wiec NIE podajemy
-            # jej ponownie — inaczej czesc argumentow bylaby ignorowana po cichu,
+            # jej ponownie - inaczej czesc argumentow bylaby ignorowana po cichu,
             # a czesc nie, i bieg przestalby odpowiadac zapisanej konfiguracji.
             print(f"wznawiam z {last}")
             model = YOLO(str(last))
             model.train(resume=True)
         else:
             if args.resume:
-                print(f"--resume podane, ale brak {last} — zaczynam od zera")
+                print(f"--resume podane, ale brak {last} - zaczynam od zera")
             model = YOLO(f"{args.model}.pt")
             model.train(
                 data=data, epochs=args.epochs, imgsz=args.imgsz, batch=batch, device=0,
@@ -195,14 +195,14 @@ def main() -> None:
         c = check_peak(args.limit_frac)
         print(f"\ntrening: {train_s/3600:.2f} h | {c}")
         if not c.fits:
-            print("UWAGA: szczyt przekroczyl limit — czesc biegu mogla thrashowac po PCIe.")
+            print("UWAGA: szczyt przekroczyl limit - czesc biegu mogla thrashowac po PCIe.")
 
     run_dir = runs_root / run_name
     best = run_dir / "weights" / "best.pt"
     if not best.is_file():
         raise SystemExit(f"Brak {best}")
 
-    # pelna, rozwiazana konfiguracja treningu — zeby "domyslna augmentacja" byla sprawdzalna
+    # pelna, rozwiazana konfiguracja treningu - zeby "domyslna augmentacja" byla sprawdzalna
     args_yaml = run_dir / "args.yaml"
     cfg = yaml.safe_load(args_yaml.read_text(encoding="utf-8")) if args_yaml.is_file() else {}
     cfg.update({
@@ -219,7 +219,7 @@ def main() -> None:
         yaml.safe_dump(_plain(cfg), sort_keys=False, allow_unicode=True), encoding="utf-8"
     )
 
-    # Zbior odniesienia zalezy od wersji etykiet — ustalany PRZED predykcja,
+    # Zbior odniesienia zalezy od wersji etykiet - ustalany PRZED predykcja,
     # bo predict potrzebuje z niego wymiarow obrazow i identyfikatorow.
     gt = dataset_root() / ("coco2cat" if two_cat else "coco") / "test.json"
     if not gt.is_file():
@@ -258,9 +258,9 @@ def main() -> None:
     # tuz po treningu wobec 76,2 na zimnej karcie). Uzupelnia to osobny przebieg
     # `scripts/benchmark_fps.py --all` po zakonczeniu calej kolejki.
     metrics["speed"] = None
-    print("\n[fps] pominiete — uruchom `scripts/benchmark_fps.py --all` po kolejce")
+    print("\n[fps] pominiete - uruchom `scripts/benchmark_fps.py --all` po kolejce")
 
-    # model.info() zwraca None w ultralytics 8.4 — liczymy sami, zeby kolumna
+    # model.info() zwraca None w ultralytics 8.4 - liczymy sami, zeby kolumna
     # "params" w leaderboardzie nie byla pusta.
     bm = YOLO(str(best)).model
     n_params = sum(p.numel() for p in bm.parameters())
@@ -276,7 +276,7 @@ def main() -> None:
     metrics["framework"] = "ultralytics"
     metrics["params_M"] = round(n_params / 1e6, 2)
     metrics["gflops"] = gflops
-    # Czas treningu kumulowany przez wznowienia — patrz afo/runstate.py
+    # Czas treningu kumulowany przez wznowienia - patrz afo/runstate.py
     total_h = accumulate_hours(run_dir, None if train_s is None else train_s / 3600)
     metrics["train"] = {
         "epochs_budget": args.epochs, "patience": args.patience, "batch": batch,

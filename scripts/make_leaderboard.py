@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 """Buduje tabele wynikow z ``results/*/metrics.json`` i wstawia je do README.
 
-AFO ma DWA zadania i kazde ma wlasna tabele — nie wolno ich mieszac:
+AFO ma DWA zadania i kazde ma wlasna tabele - nie wolno ich mieszac:
 
-* **6 klas** — trudniejsze, nowe; to jest benchmark tego repozytorium.
-* **2 klasy** (small_obj = human+buoy, large_obj = reszta) — schemat z Tabeli 2
+* **6 klas** - trudniejsze, nowe; to jest benchmark tego repozytorium.
+* **2 klasy** (small_obj = human+buoy, large_obj = reszta) - schemat z Tabeli 2
   oryginalnej pracy, zeby wyniki byly porownywalne z opublikowanymi.
 
 Kazda kolumna rozmiarowa niesie liczebnosc GT, a wiersze przy roznych imgsz sa
-rozdzielone — kubelki AP-tiny/AP-small licza sie w pikselach wejscia modelu,
+rozdzielone - kubelki AP-tiny/AP-small licza sie w pikselach wejscia modelu,
 wiec miedzy rozdzielczosciami NIE sa porownywalne (patrz BENCHMARK.md).
 """
 
@@ -41,7 +41,7 @@ PAPER_ROWS = [
 ]
 
 
-def fmt(v, nd=4, dash="—"):
+def fmt(v, nd=4, dash="-"):
     if v is None:
         return dash
     try:
@@ -59,7 +59,7 @@ def load(results_dir: Path) -> list[dict]:
         try:
             rows.append(json.loads(p.read_text(encoding="utf-8")))
         except json.JSONDecodeError as e:
-            print(f"UWAGA: pomijam {p} — nieczytelny JSON ({e})")
+            print(f"UWAGA: pomijam {p} - nieczytelny JSON ({e})")
     return rows
 
 
@@ -69,13 +69,13 @@ def _fps_of(r: dict):
 
 def _weights_link(r: dict) -> str:
     repo = r.get("weights_hf")
-    return f"[HF]({HF_URL.format(repo=repo)})" if repo else "—"
+    return f"[HF]({HF_URL.format(repo=repo)})" if repo else "-"
 
 
 def build_six_class(rows: list[dict]) -> str:
     """Tabela glowna: 6 klas, sortowana po mAP50-95, rozdzielona po imgsz."""
     if not rows:
-        return "*Brak wynikow 6-klasowych — uruchom `scripts/train_ultralytics.py`.*"
+        return "*Brak wynikow 6-klasowych - uruchom `scripts/train_ultralytics.py`.*"
 
     by_imgsz: dict[int, list[dict]] = {}
     for r in rows:
@@ -105,13 +105,13 @@ def build_six_class(rows: list[dict]) -> str:
             )
 
     out.append(
-        "\nSorted by test mAP50-95. Size buckets use a **fixed reference scale** — every "
-        "image rescaled to a 640 px longest side, independent of the training resolution — "
+        "\nSorted by test mAP50-95. Size buckets use a **fixed reference scale** - every "
+        "image rescaled to a 640 px longest side, independent of the training resolution - "
         "so AP-tiny means the same population of objects in every row and 640 is directly "
         "comparable with 1280. One run per model, no seed-variance estimate: treat gaps "
         "under ~1 point as noise. Inference speed is not benchmarked: the only available GPU is "
         "a shared laptop, where repeated measurements of the same weights varied by up to 55%. "
-        "Per-run diagnostics beyond mAP are in `operating_point` in each `metrics.json` — see "
+        "Per-run diagnostics beyond mAP are in `operating_point` in each `metrics.json` - see "
         "[BENCHMARK.md](BENCHMARK.md)."
     )
     return "\n".join(out)
@@ -135,13 +135,13 @@ def build_two_class(rows: list[dict], with_paper: bool = True) -> str:
 
     paper = [
         {"name": n, "imgsz": z, "ap": ap, "ap50": ap50, "small": s, "large": l,
-         "src": "paper 2021", "link": "—"}
+         "src": "paper 2021", "link": "-"}
         for n, z, ap, ap50, s, l in PAPER_ROWS
     ] if with_paper else []
 
     allrows = sorted(ours + paper, key=lambda d: d["ap"])
     if not ours:
-        return "*Brak wynikow 2-klasowych — uruchom z `--categories 2categories`.*"
+        return "*Brak wynikow 2-klasowych - uruchom z `--categories 2categories`.*"
 
     out = [
         "| model | source | imgsz | AP | AP@50 | AP@50 `small_obj` | AP@50 `large_obj` | weights |",
@@ -159,7 +159,7 @@ def build_two_class(rows: list[dict], with_paper: bool = True) -> str:
         )
     out.append(
         "\nAP in percent, as in the paper. `small_obj` = human + buoy, `large_obj` = "
-        "board + boat + sailboat + kayak — a **semantic** merge, not a box-area threshold, "
+        "board + boat + sailboat + kayak - a **semantic** merge, not a box-area threshold, "
         "so these columns are per-class AP and not COCO's AP-small/AP-large. Paper rows are "
         "reproduced from Table 2 of [doi:10.3233/ICA-210649](https://doi.org/10.3233/ICA-210649) "
         "for context; they were produced with different resolutions (300²–1333×750) and a "
@@ -173,7 +173,7 @@ def splice(readme: Path, key: str, table: str) -> bool:
     start, end = MARKERS[key]
     text = readme.read_text(encoding="utf-8")
     if start not in text or end not in text:
-        print(f"UWAGA: brak znacznikow {start} / {end} w {readme} — pomijam")
+        print(f"UWAGA: brak znacznikow {start} / {end} w {readme} - pomijam")
         return False
     head, rest = text.split(start, 1)
     _, tail = rest.split(end, 1)

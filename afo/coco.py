@@ -33,7 +33,7 @@ def build_coco(
     """Buduje slownik COCO z gotowego ``AFODataset``.
 
     ``drop_degenerate`` usuwa ramki o zerowej powierzchni po przeliczeniu na
-    piksele (pycocotools i tak ich nie oceni). Ile i ktorych — raportowane w
+    piksele (pycocotools i tak ich nie oceni). Ile i ktorych - raportowane w
     ``info.notes`` oraz na stdout, nigdy po cichu.
     """
     images: list[dict] = []
@@ -104,7 +104,7 @@ def build_coco(
 
     return {
         "info": {
-            "description": "AFO — Aerial dataset of Floating Objects",
+            "description": "AFO - Aerial dataset of Floating Objects",
             "url": "https://huggingface.co/datasets/jgasienica/afo-dataset",
             "version": "1.0",
             "year": 2021,
@@ -136,7 +136,7 @@ def export_coco(
 ) -> Path:
     """Eksportuje jeden podzial do pliku COCO JSON i zwraca jego sciezke.
 
-    Domyslne miejsce zapisu: ``<output_root>/coco/<split>.json`` — nigdy w repo
+    Domyslne miejsce zapisu: ``<output_root>/coco/<split>.json`` - nigdy w repo
     i nigdy w korzeniu zbioru, jesli ten jest tylko do odczytu (Kaggle).
     """
     ds = AFODataset(split=split, root=root, clip=clip, categories=categories)
@@ -149,7 +149,7 @@ def export_coco(
     out_path.write_text(json.dumps(coco), encoding="utf-8")
 
     print(
-        f"[AFO/{ds.split}] zapisano {out_path} — "
+        f"[AFO/{ds.split}] zapisano {out_path} - "
         f"{len(coco['images'])} obrazow, {len(coco['annotations'])} obiektow"
     )
     return out_path

@@ -14,7 +14,7 @@ size_categories:
 ---
 
 <!--
-Source for the card at https://huggingface.co/datasets/jgasienica/afo-dataset — edit here, then:
+Source for the card at https://huggingface.co/datasets/jgasienica/afo-dataset - edit here, then:
   huggingface-cli upload jgasienica/afo-dataset docs/dataset-card.md README.md --repo-type=dataset
 The images it references live in that repo under figures/ and come from docs/figures/:
   huggingface-cli upload jgasienica/afo-dataset docs/figures figures --repo-type=dataset
@@ -28,7 +28,7 @@ remains one of the few that targets very small objects seen from altitude over o
 
 ![Sample images with ground-truth boxes](figures/samples.png)
 
-Reproducible detection baselines on the official splits — loader, COCO export and a shared evaluator —
+Reproducible detection baselines on the official splits - loader, COCO export and a shared evaluator -
 are at **[github.com/Panicum/afo-benchmark](https://github.com/Panicum/afo-benchmark)**.
 
 ## Contents
@@ -37,7 +37,7 @@ are at **[github.com/Panicum/afo-benchmark](https://github.com/Panicum/afo-bench
 small: they are swimmers and boards seen from tens of metres up, often only a few dozen pixels across.
 729 images contain no annotated object and are kept as negatives.
 
-One image, `i3_200.jpg`, is listed in none of the three split files — together they cover 3,640 of the
+One image, `i3_200.jpg`, is listed in none of the three split files - together they cover 3,640 of the
 3,641 images. It is one of the background frames. Documented, not fixed: the splits are shipped as
 released.
 
@@ -70,7 +70,7 @@ what the loader must use.
 ![Object size distribution](figures/object-size.png)
 
 Object size is the reason this dataset is hard. In native 2.5K–4K pixels almost nothing is small by
-COCO's thresholds — the `tiny` bucket holds 15 objects in the entire dataset — but at the resolution a
+COCO's thresholds - the `tiny` bucket holds 15 objects in the entire dataset - but at the resolution a
 detector actually sees, 62 % of objects fall into `tiny` at 640 px input and 54 % into `small` at
 1280 px.
 
@@ -78,7 +78,7 @@ detector actually sees, 62 % of objects fall into `tiny` at 640 px input and 54 
 
 Frames are also crowded: a single image carries up to 94 annotated objects, which is why the benchmark
 raises pycocotools' `maxDets` above the COCO default of 100. Note that the negatives are not spread
-evenly — 720 of 2,787 train images and 8 of 339 val images have no objects, while the test split has
+evenly - 720 of 2,787 train images and 8 of 339 val images have no objects, while the test split has
 none at all.
 
 Splits, as shipped in the original release:
@@ -96,7 +96,7 @@ frame ranges that are almost entirely disjoint from their train/val frames.
 ## Format
 
 Darknet YOLO. **This repository reproduces the original Kaggle release byte-for-byte, including its
-three-part layout and the doubled directory nesting** — nothing was merged, renamed or re-indexed.
+three-part layout and the doubled directory nesting** - nothing was merged, renamed or re-indexed.
 
 ```
 PART_1/PART_1/
@@ -119,7 +119,7 @@ Two things follow from this layout:
 - Each label file is `<image stem>.txt`, one object per line: `class cx cy w h`, normalised to
   \[0, 1\] relative to image width and height, with `cx cy` the box centre.
 
-The split lists contain bare filenames (`a_102.jpg`), not paths — the image may be in any of the three
+The split lists contain bare filenames (`a_102.jpg`), not paths - the image may be in any of the three
 parts.
 
 ## Loading
@@ -150,12 +150,12 @@ A packaged loader, COCO export, dataset statistics and trained baselines are in
 18 runs on the official test split, one shared pycocotools evaluator, weights published per run.
 Full tables and protocol: [afo-benchmark](https://github.com/Panicum/afo-benchmark).
 
-**Six classes** (10 runs) — best is `rfdetr-base` at 640: **0.4080** mAP50-95, 0.7279 mAP50.
+**Six classes** (10 runs) - best is `rfdetr-base` at 640: **0.4080** mAP50-95, 0.7279 mAP50.
 
-**Two classes** (8 runs), the merge used in Table 2 of the paper — `small_obj` = human + buoy,
+**Two classes** (8 runs), the merge used in Table 2 of the paper - `small_obj` = human + buoy,
 `large_obj` = the rest. Best is `rfdetr-nano` at 640: **36.44** AP, 81.23 AP@50, 67.63 AP@50 on
 `small_obj`. For reference, Table 2's strongest single model reached 36.25 AP and its best ensemble
-37.71 AP — but those were trained at 300²–1333×750 on a fixed 20k-iteration schedule, so read the
+37.71 AP - but those were trained at 300²–1333×750 on a fixed 20k-iteration schedule, so read the
 comparison as context, not as rows of one experiment.
 
 Each run is a single seed, so differences under roughly 1 AP point should not be read as real.

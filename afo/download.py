@@ -3,7 +3,7 @@
 Dane nigdy nie trafiaja do repozytorium. Domyslny cache: ~/.cache/afo,
 nadpisywalny zmienna srodowiskowa AFO_ROOT.
 
-Korzen zbioru moze byc TYLKO DO ODCZYTU — tak jest na Kaggle, gdzie zbior jest
+Korzen zbioru moze byc TYLKO DO ODCZYTU - tak jest na Kaggle, gdzie zbior jest
 podmontowany w /kaggle/input/... Dlatego zadna funkcja pakietu nie zapisuje do
 korzenia: miejsce na wyniki daje `output_root()` (AFO_OUT, a w razie braku
 katalog roboczy), a `ensure_dataset()` nie dotyka dysku, jesli zbior juz jest.
@@ -40,7 +40,7 @@ def is_writable(path: Path | str) -> bool:
     Jedna jawna proba, bez ``tempfile``: tempfile ma wlasna petle po nazwach i
     przy PermissionError sprawdza wlasnie ``os.access``, wiec na katalogu z
     odmowa zapisu krecil sie TMP_MAX razy zamiast zwrocic odpowiedz. Wygladalo
-    to jak zawieszenie — sprawdzone na symulacji montowania Kaggle.
+    to jak zawieszenie - sprawdzone na symulacji montowania Kaggle.
     """
     p = Path(path)
     if not p.is_dir():
@@ -63,7 +63,7 @@ def output_root(root: Path | str | None = None) -> Path:
 
     Kolejnosc: zmienna AFO_OUT, potem korzen zbioru jesli jest zapisywalny,
     a na koncu katalog roboczy. Na Kaggle korzen jest tylko do odczytu, a
-    katalogiem roboczym jest /kaggle/working — czyli jedyne miejsce, ktore
+    katalogiem roboczym jest /kaggle/working - czyli jedyne miejsce, ktore
     sesja zachowuje jako wynik.
     """
     env = os.environ.get("AFO_OUT")

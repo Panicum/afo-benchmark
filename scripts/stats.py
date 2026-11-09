@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Statystyki zbioru AFO — tabele uzyte w README.
+"""Statystyki zbioru AFO - tabele uzyte w README.
 
 Liczy: obrazy i obiekty na podzial, udzialy procentowe, histogram klas,
 rozmiary obiektow w kubelkach AFO (tiny/small/medium/large) oraz znane
@@ -80,7 +80,7 @@ def main() -> None:
     total_imgs = len(ds_all)
     total_objs = ds_all.num_objects()
 
-    print(f"\n# AFO — statystyki (root: {root})\n")
+    print(f"\n# AFO - statystyki (root: {root})\n")
     print(f"Obrazow w zbiorze: {total_imgs}")
     print(f"Obiektow (6 klas): {total_objs}")
     print(f"Klasy ({len(class_names)}): {', '.join(class_names)}\n")
@@ -119,7 +119,7 @@ def main() -> None:
         )
     )
 
-    # Obrazy tla (pusty plik etykiet) — rozklad miedzy podzialami jest bardzo
+    # Obrazy tla (pusty plik etykiet) - rozklad miedzy podzialami jest bardzo
     # nierowny i zmienia interpretacje gestosci obiektow, wiec liczony osobno.
     print("\n### Obrazy bez obiektow (pusty plik etykiet)\n")
     rows = []
@@ -145,7 +145,7 @@ def main() -> None:
     n_empty_all = sum(1 for r in ds_all.records if not r.annotations)
     print(f"\nW calym zbiorze: {n_empty_all} obrazow tla ({100 * n_empty_all / total_imgs:.2f}%).")
     print(
-        "UWAGA: test nie zawiera ANI JEDNEGO obrazu tla — na tym zbiorze nie da sie"
+        "UWAGA: test nie zawiera ANI JEDNEGO obrazu tla - na tym zbiorze nie da sie"
         "\nzmierzyc falszywych alarmow na pustej wodzie."
     )
     counts_per_img = [len(r.annotations) for r in ds_all.records]
@@ -154,7 +154,7 @@ def main() -> None:
         f"obrazow z >=40 obiektami: {sum(1 for c in counts_per_img if c >= 40)}"
     )
 
-    # obrazy spoza list podzialu — raportowane z nazwy
+    # obrazy spoza list podzialu - raportowane z nazwy
     in_splits = set()
     for s in SPLITS:
         in_splits.update(r.filename for r in datasets[s].records)
@@ -246,7 +246,7 @@ def main() -> None:
     print(fmt_table(rows, ["imgsz", "kubelek", "obiekty", "%", "test", "% test"]))
     print(
         "\nUWAGA: w pikselach oryginalu 98.7% obiektow wpada w medium+large, a kubelek"
-        "\ntiny ma w CALYM zbiorze 15 obiektow (wszystkie w tescie) — AP-tiny liczone"
+        "\ntiny ma w CALYM zbiorze 15 obiektow (wszystkie w tescie) - AP-tiny liczone"
         "\nw tej skali jest szumem. Obiekty AFO sa male WZGLEDEM KADRU, nie w pikselach."
     )
 

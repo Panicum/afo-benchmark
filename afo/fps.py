@@ -1,4 +1,4 @@
-"""Pomiar predkosci wnioskowania — wspolny dla wszystkich modeli benchmarku.
+"""Pomiar predkosci wnioskowania - wspolny dla wszystkich modeli benchmarku.
 
 Batch 1, FP16, srednia po zbiorze testowym, po 50 obrazach rozgrzewkowych.
 Czas mierzony po ``torch.cuda.synchronize()``, inaczej mierzy sie kolejkowanie,
@@ -32,7 +32,7 @@ def _percentiles(xs: list[float]) -> dict[str, float]:
 #: Ile razy powtorzyc caly przebieg; raportujemy mediane plus zakres.
 DEFAULT_REPEATS = 4
 
-#: Prog wczesnego wyjscia z cool-downu. Nie jest wymaganiem — patrz
+#: Prog wczesnego wyjscia z cool-downu. Nie jest wymaganiem - patrz
 #: ``wait_for_cooldown``, ktore czeka na USTABILIZOWANIE temperatury, bo ta
 #: karta spoczywa na ~70 stopniach i bezwzgledny prog 50 byl nieosiagalny.
 #:
@@ -77,14 +77,14 @@ def wait_for_cooldown(
     NIE czeka na bezwzgledny prog. Ten laptop spoczywa na 70-73 stopniach, wiec
     cel 50 byl nieosiagalny i kazdy model marnowalby pelny limit czekania, zeby
     i tak zmierzyc przy tej samej temperaturze. Liczy sie to, zeby wszystkie
-    pomiary zaczynaly sie w tym samym, ustabilizowanym stanie — a nie to, jaka
+    pomiary zaczynaly sie w tym samym, ustabilizowanym stanie - a nie to, jaka
     liczba na nim wypada. ``target_c`` dziala jako wczesne wyjscie, gdyby karta
     chlodzila sie ponizej niego.
     """
     t0 = time.perf_counter()
     st = gpu_state()
     if st["temp_c"] is None:
-        print("[fps] nie udalo sie odczytac temperatury — pomijam cool-down")
+        print("[fps] nie udalo sie odczytac temperatury - pomijam cool-down")
         return {"waited_s": 0, "settled": None, **st}
 
     start_temp = st["temp_c"]
@@ -102,7 +102,7 @@ def wait_for_cooldown(
                 break
         if waited > max_wait_s:
             print(f"[fps] cool-down przerwany po {waited/60:.1f} min przy "
-                  f"{st['temp_c']:.0f} °C — temperatura nadal sie zmienia.")
+                  f"{st['temp_c']:.0f} °C - temperatura nadal sie zmienia.")
             break
         print(f"[fps] cool-down: {st['temp_c']:.0f} °C, czekam na ustabilizowanie "
               f"({waited/60:.1f} min)...", flush=True)
@@ -133,7 +133,7 @@ def measure_fps(
 ) -> dict:
     """Mierzy FPS modelu Ultralytics na zbiorze testowym (mediana z ``repeats``).
 
-    Przed pomiarem czeka na wychlodzenie karty i zapisuje jej stan cieplny —
+    Przed pomiarem czeka na wychlodzenie karty i zapisuje jej stan cieplny -
     bez tego liczba mowi wiecej o tym, co dzialo sie wczesniej, niz o modelu.
     """
     thermal = wait_for_cooldown(cooldown_temp_c) if cooldown else {"skipped": True}
@@ -172,7 +172,7 @@ def measure_fps(
     )
     if spread > 15:
         print(
-            "[fps] UWAGA: rozrzut powyzej 15% — karta zmienia zegary w trakcie pomiaru. "
+            "[fps] UWAGA: rozrzut powyzej 15% - karta zmienia zegary w trakcie pomiaru. "
             "Wydluz cool-down albo ustaw profil wysokiej wydajnosci."
         )
     return out
@@ -252,7 +252,7 @@ def _measure_once(
             "fps": round(1.0 / statistics.fmean(inference), 2),
         },
         "note": (
-            f"{gpu} — czesc LAPTOPOWA (76 SM wobec 128 w wersji desktopowej), "
+            f"{gpu} - czesc LAPTOPOWA (76 SM wobec 128 w wersji desktopowej), "
             f"podatna na throttling termiczny. FPS porownywac miedzy wierszami tej "
             f"tabeli, nie z wynikami z desktopowych kart."
         ),

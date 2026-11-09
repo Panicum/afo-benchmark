@@ -1,4 +1,4 @@
-"""Loader zbioru AFO — oficjalne podzialy, etykiety Darknet YOLO.
+"""Loader zbioru AFO - oficjalne podzialy, etykiety Darknet YOLO.
 
 Zasada: nic nie wypada po cichu. Jesli plik z listy podzialu nie ma obrazu albo
 etykiety, loader mowi o tym Z NAZWY (atrybuty `missing_images`, `missing_labels`),
@@ -55,7 +55,7 @@ class Annotation(NamedTuple):
 
 @dataclass
 class Sample:
-    """Rekord jednego obrazu — metadane bez wczytywania pikseli."""
+    """Rekord jednego obrazu - metadane bez wczytywania pikseli."""
 
     filename: str
     image_path: Path
@@ -90,7 +90,7 @@ def _parse_label_file(path: Path, clip: bool) -> tuple[list[Annotation], int]:
             continue
         parts = line.split()
         if len(parts) != 5:
-            warnings.warn(f"{path}:{lineno}: oczekiwano 5 pol, jest {len(parts)} — linia pominieta")
+            warnings.warn(f"{path}:{lineno}: oczekiwano 5 pol, jest {len(parts)} - linia pominieta")
             continue
         cid = int(float(parts[0]))
         vals = [float(v) for v in parts[1:]]
@@ -122,7 +122,7 @@ def _image_index(root_str: str) -> dict[str, Path]:
             if p.name in index:
                 warnings.warn(
                     f"Nazwa obrazu wystepuje w dwoch czesciach: {p.name} "
-                    f"({index[p.name]} vs {p}) — uzywam pierwszej"
+                    f"({index[p.name]} vs {p}) - uzywam pierwszej"
                 )
                 continue
             index[p.name] = p
@@ -162,7 +162,7 @@ class AFODataset(Sequence):
         "all" to wszystkie obrazy zbioru, takze te spoza list podzialu.
     root : sciezka do pobranego zbioru (domyslnie cache z afo.download)
     clip : przycinac wspolrzedne spoza [0,1] do [0,1] (domyslnie True)
-    categories : katalog etykiet — "6categories" (domyslnie), "2categories", "1category"
+    categories : katalog etykiet - "6categories" (domyslnie), "2categories", "1category"
     download : pobrac zbior, jesli go nie ma
 
     Iteracja zwraca krotke ``(PIL.Image, list[Annotation])``; metadane bez

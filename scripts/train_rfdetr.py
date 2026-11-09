@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 """Trening RF-DETR wg protokolu z BENCHMARK.md.
 
-Ten sam podzial, ten sam zbior testowy i ten sam ewaluator co dla Ultralytics —
+Ten sam podzial, ten sam zbior testowy i ten sam ewaluator co dla Ultralytics -
 rozni sie tylko framework. Wyniki laduja w ``results/<model>_<imgsz>[_2cat]/``
 w identycznym formacie, zeby leaderboard nie musial wiedziec, skad pochodza.
 
 UWAGA na mapowanie klas: RF-DETR zwraca ``class_id``, ktore MUSI odpowiadac
 ``category_id`` z COCO. Skrypt to sprawdza i przerywa, zamiast po cichu
-wyprodukowac predykcje w zlym numerowaniu — raz juz kosztowalo to bieg, ktory
+wyprodukowac predykcje w zlym numerowaniu - raz juz kosztowalo to bieg, ktory
 dal mAP 0,0000 przy 31 tys. detekcji.
 """
 
@@ -89,7 +89,7 @@ def main() -> None:
     images_dir = root / f"yolo1280{suffix}" / "images" / "test"
     for p in (data_dir, gt, images_dir):
         if not p.exists():
-            raise SystemExit(f"Brak {p} — przygotuj dane (afo.yolo / afo.rfdetr_data / export_coco)")
+            raise SystemExit(f"Brak {p} - przygotuj dane (afo.yolo / afo.rfdetr_data / export_coco)")
 
     results_root = Path(args.results_dir).resolve()
     out_dir = results_root / run_name
@@ -128,7 +128,7 @@ def main() -> None:
         last = run_dir / "last.ckpt"
         resume_from = str(last) if (args.resume and last.is_file()) else None
         if args.resume and not resume_from:
-            print(f"--resume podane, ale brak {last} — zaczynam od zera")
+            print(f"--resume podane, ale brak {last} - zaczynam od zera")
         elif resume_from:
             print(f"wznawiam z {last}")
         model.train(
@@ -141,7 +141,7 @@ def main() -> None:
         c = check_peak(args.limit_frac)
         print(f"\ntrening: {train_s/3600:.2f} h | {c}")
         if not c.fits:
-            print("UWAGA: szczyt przekroczyl limit — bieg mogl thrashowac po PCIe.")
+            print("UWAGA: szczyt przekroczyl limit - bieg mogl thrashowac po PCIe.")
         del model
         torch.cuda.empty_cache()
 
@@ -175,7 +175,7 @@ def main() -> None:
     if dets and not got <= expected_ids:
         raise SystemExit(
             f"Niezgodne numerowanie klas: predykcje maja {sorted(got)}, "
-            f"a test.json oczekuje {sorted(expected_ids)}. Przerwane — inaczej mAP "
+            f"a test.json oczekuje {sorted(expected_ids)}. Przerwane - inaczej mAP "
             f"wyszloby zerowe bez zadnego komunikatu."
         )
 
@@ -193,7 +193,7 @@ def main() -> None:
     # Jak w torze Ultralytics: pomiar zaraz po treningu bylby pomiarem goracej
     # karty, nie modelu. Zmierzyc osobno, po cool-downie.
     metrics["speed"] = None
-    print("\n[fps] pominiete — zmierz osobnym przebiegiem po cool-downie")
+    print("\n[fps] pominiete - zmierz osobnym przebiegiem po cool-downie")
 
     n_params = sum(p.numel() for p in infer.model.model.parameters())
     metrics["model"] = model_name
@@ -209,7 +209,7 @@ def main() -> None:
         }
     metrics["params_M"] = round(n_params / 1e6, 2)
     metrics["gflops"] = None
-    # Czas treningu kumulowany przez wznowienia — patrz afo/runstate.py
+    # Czas treningu kumulowany przez wznowienia - patrz afo/runstate.py
     total_h = accumulate_hours(run_dir, None if train_s is None else train_s / 3600)
     metrics["train"] = {
         "epochs_budget": args.epochs, "patience": args.patience, "batch": batch,

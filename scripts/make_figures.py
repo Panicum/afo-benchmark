@@ -1,10 +1,10 @@
 #!/usr/bin/env python
-"""Figury do README — przykladowe kadry i wykresy opisujace zbior.
+"""Figury do README - przykladowe kadry i wykresy opisujace zbior.
 
 Zasady kolorystyki (walidowane pod katem daltonizmu, OKLab dE >= 8 dla par
 sasiednich): kolor niesie TOZSAMOSC klasy i jest ten sam na wszystkich
 figurach, zeby czytelnik raz nauczyl sie, ze "human to niebieski".
-Wykresy ilosciowe uzywaja jednego koloru — dlugosc slupka juz niesie wartosc.
+Wykresy ilosciowe uzywaja jednego koloru - dlugosc slupka juz niesie wartosc.
 
 Wyjscie: docs/figures/*.png (commitowane, male pliki).
 """
@@ -92,10 +92,10 @@ def fig_samples(ds_all: AFODataset, out: Path, n_cols: int = 3, n_rows: int = 2)
             if cid not in by_class or c > by_class[cid][0]:
                 by_class[cid] = (c, rec)
 
-    # Najgestszy kadr idzie pierwszy — sam w sobie pokrywa klase "human".
+    # Najgestszy kadr idzie pierwszy - sam w sobie pokrywa klase "human".
     # Potem dokladamy po jednym kadrze na klase JESZCZE nieobecna, zeby nie
     # marnowac paneli na powtorzenie tej samej sceny, i na koniec jeden kadr
-    # tla (20% zbioru to puste kadry — to tez trzeba pokazac).
+    # tla (20% zbioru to puste kadry - to tez trzeba pokazac).
     picks, seen, covered = [], set(), set()
 
     def take(rec) -> None:
@@ -131,7 +131,7 @@ def fig_samples(ds_all: AFODataset, out: Path, n_cols: int = 3, n_rows: int = 2)
                 )
             )
         n_obj = len(rec.annotations)
-        label = f"{n_obj} obj" if n_obj else "background — no objects"
+        label = f"{n_obj} obj" if n_obj else "background - no objects"
         ax.set_title(
             f"{rec.filename} · {label} · {W}×{H}",
             fontsize=8.5, color=INK_2, pad=4,
@@ -178,7 +178,7 @@ def fig_classes(ds: dict[str, AFODataset], out: Path) -> Path:
         matplotlib.ticker.FuncFormatter(lambda v, _: f"{int(v):,}".replace(",", " "))
     )
 
-    # kazdy slupek dostaje etykiete — przy 207x przewagi najmniejsze sa niewidoczne
+    # kazdy slupek dostaje etykiete - przy 207x przewagi najmniejsze sa niewidoczne
     for yi, n in zip(y, order):
         v = totals[n]
         ax.text(
@@ -240,7 +240,7 @@ def fig_sizes(ds: dict[str, AFODataset], out: Path) -> Path:
         [0, 10000, 20000, 30000], ["0", "10 000", "20 000", "30 000"]
     )
     fig.suptitle(
-        "AFO objects are small relative to the frame, not in absolute pixels — "
+        "AFO objects are small relative to the frame, not in absolute pixels - "
         "the same buckets, measured three ways",
         fontsize=12.5, y=1.03, x=0.5, ha="center", color=INK,
     )
@@ -289,7 +289,7 @@ def fig_density(ds: dict[str, AFODataset], out: Path) -> Path:
     ax.set_ylim(0, max(share) * 1.3)
     _clean(ax, grid_axis="y")
     ax.set_title(
-        "Background images (no objects) — and none at all in test",
+        "Background images (no objects) - and none at all in test",
         fontsize=11, loc="left", pad=8,
     )
     fig.tight_layout()
@@ -309,7 +309,7 @@ def fig_pr_curves(out: Path, results_dir: Path, categories: str = "6categories")
     Rozstrzyga to, czego sama tabela AP nie rozstrzyga: czy model wygrywajacy
     mAP jest lepszy wszedzie, czy tylko w jakims fragmencie krzywej. Na AFO
     odpowiedz jest nieoczywista, bo mAP usrednia po klasach z rowna waga, a ta
-    krzywa wazy obiektami — przy 85% udziale klasy "human" to dwa rozne pytania.
+    krzywa wazy obiektami - przy 85% udziale klasy "human" to dwa rozne pytania.
     """
     import json
 
@@ -332,7 +332,7 @@ def fig_pr_curves(out: Path, results_dir: Path, categories: str = "6categories")
         )
         series.append((m["model"], op, m.get("mAP50"), m.get("mAP50_95") or 0))
     if len(series) < 2:
-        print("  (pomijam krzywe PR — mniej niz dwa biegi 6-klasowe @640)")
+        print("  (pomijam krzywe PR - mniej niz dwa biegi 6-klasowe @640)")
         return None
     # sortowanie jak w leaderboardzie: po mAP50-95, nie po mAP50
     series.sort(key=lambda t: -t[3])
@@ -340,7 +340,7 @@ def fig_pr_curves(out: Path, results_dir: Path, categories: str = "6categories")
     # Najlepszy z kazdej RODZINY, nie wszystko. Dziewiec nakladajacych sie
     # krzywych jest nieczytelne, a paleta kategorialna ma sprawdzone tylko
     # pierwsze trzy sloty dla wykresow, gdzie porownuje sie kazda pare z kazda
-    # (krzywe, scatter) — poza nimi barwy przestaja byc rozroznialne przy
+    # (krzywe, scatter) - poza nimi barwy przestaja byc rozroznialne przy
     # daltonizmie. Reszta i tak jest w tabeli.
     def family(name: str) -> str:
         for f in ("rfdetr", "rtdetr", "yolo11", "yolov8"):
@@ -352,7 +352,7 @@ def fig_pr_curves(out: Path, results_dir: Path, categories: str = "6categories")
     for item in series:  # juz posortowane malejaco po mAP50
         best_per_family.setdefault(family(item[0]), item)
     series = list(best_per_family.values())[:len(SERIES)]
-    print(f"  (krzywe PR: najlepszy z kazdej rodziny — {', '.join(x[0] for x in series)})")
+    print(f"  (krzywe PR: najlepszy z kazdej rodziny - {', '.join(x[0] for x in series)})")
 
     fig, axes = plt.subplots(1, 2, figsize=(13, 4.4))
 
@@ -389,7 +389,7 @@ def fig_pr_curves(out: Path, results_dir: Path, categories: str = "6categories")
     fig.text(
         0.5, -0.06,
         f"Dots mark each model's best-F1 point. No model exceeds {ceil:.0%} recall at any "
-        f"confidence — the rest is never detected, and no threshold recovers it.",
+        f"confidence - the rest is never detected, and no threshold recovers it.",
         ha="center", fontsize=9.5, color=MUTED,
     )
     fig.tight_layout()

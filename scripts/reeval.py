@@ -2,7 +2,7 @@
 """Ponowna ewaluacja gotowych biegow z zapisanych ``predictions_test.json``.
 
 Po zmianie w ewaluatorze (np. definicji kubelkow rozmiaru) wyniki trzeba
-przeliczyc — ale NIE trzeba uczyc modeli od nowa, bo predykcje sa zapisane.
+przeliczyc - ale NIE trzeba uczyc modeli od nowa, bo predykcje sa zapisane.
 Pola spoza ewaluacji (``speed``, ``params_M``, ``train``, ``weights_hf``) sa
 zachowane bez zmian.
 """
@@ -16,7 +16,7 @@ from pathlib import Path
 from afo.download import dataset_root
 from afo.evaluate import evaluate, evaluate_two_category
 
-#: pola, ktore nalezą do biegu, a nie do ewaluacji — przenoszone bez zmian
+#: pola, ktore nalezą do biegu, a nie do ewaluacji - przenoszone bez zmian
 KEEP = ("speed", "params_M", "gflops", "model", "framework", "train", "weights_hf")
 
 
@@ -39,7 +39,7 @@ def main() -> None:
         old = json.loads((run / "metrics.json").read_text(encoding="utf-8"))
         pred = run / "predictions_test.json"
         if not pred.is_file():
-            print(f"[reeval] {run.name}: brak predictions_test.json — POMIJAM")
+            print(f"[reeval] {run.name}: brak predictions_test.json - POMIJAM")
             continue
 
         cats = old.get("categories", "6categories")
@@ -72,7 +72,7 @@ def main() -> None:
             )
         assert abs(new["mAP50_95"] - old["mAP50_95"]) < 1e-9, (
             f"{run.name}: mAP50-95 sie zmienilo ({old['mAP50_95']} -> {new['mAP50_95']}), "
-            f"a zmiana dotyczyla tylko kubelkow — przerwane"
+            f"a zmiana dotyczyla tylko kubelkow - przerwane"
         )
 
         if not args.dry_run:

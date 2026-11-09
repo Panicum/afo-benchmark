@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-"""Sekwencyjny runner macierzy benchmarku — jeden bieg naraz.
+"""Sekwencyjny runner macierzy benchmarku - jeden bieg naraz.
 
 Pomija to, co juz ma ``metrics.json``, wiec po przerwaniu wystarczy uruchomic
 ponownie. Po kazdym biegu odswieza leaderboard, zeby czesciowy postep byl
-widoczny bez czekania na koniec. Blad jednego modelu nie zatrzymuje reszty —
+widoczny bez czekania na koniec. Blad jednego modelu nie zatrzymuje reszty -
 jest raportowany i kolejka idzie dalej.
 
     python scripts/run_queue.py --plan               # pokaz, co by zrobil
@@ -31,7 +31,7 @@ ENV = {**os.environ, "PYTHONIOENCODING": "utf-8"}
 
 #: Log samej kolejki. Pojedyncze biegi zapisuja sie same (results/<bieg>/log.txt),
 #: ale warstwa "co ruszylo, co pominieto i dlaczego" szla dotad tylko na konsole
-#: i ginela razem z zamknietym oknem. Dopisywany, nie nadpisywany — historia
+#: i ginela razem z zamknietym oknem. Dopisywany, nie nadpisywany - historia
 #: kolejnych nocy jest czesto tym, czego szuka sie najpierw.
 QUEUE_LOG = Path("results/_queue.log")
 
@@ -44,7 +44,7 @@ class _Tee:
         self.f = open(path, "a", encoding="utf-8")
         bar = "=" * 70
         stamp = _dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        self.f.write(f"\n{bar}\n[queue] start {stamp} — {' '.join(sys.argv)}\n{bar}\n")
+        self.f.write(f"\n{bar}\n[queue] start {stamp} - {' '.join(sys.argv)}\n{bar}\n")
 
     def write(self, s):
         sys.__stdout__.write(s)
@@ -62,7 +62,7 @@ class Job:
     imgsz: int
     categories: str
     framework: str = "ultralytics"
-    #: szacowany czas w godzinach — tylko do planowania, nie do raportowania
+    #: szacowany czas w godzinach - tylko do planowania, nie do raportowania
     est_h: float = 1.0
 
     @property
@@ -88,7 +88,7 @@ class Job:
 # Szacunki przy 640 to MEDIANY ZMIERZONYCH biegow (11 sztuk), nie kalibracja:
 #   n 0,60-0,74 h | s 1,10-1,25 h | m 2,69-2,81 h
 # Przy 1280 i dla RF-DETR nadal nie ma ukonczonego biegu, wiec to gorne
-# oszacowania z krotkiej kalibracji — a ta zawyzala ~3x, gdy ja sprawdzono
+# oszacowania z krotkiej kalibracji - a ta zawyzala ~3x, gdy ja sprawdzono
 # na 640. Zostawione z zapasem: lepiej pominac bieg, ktory by sie zmiescil,
 # niz obudzic sie z urwanym w polowie.
 YOLO_640 = ["yolov8n", "yolov8s", "yolov8m", "yolo11n", "yolo11s", "yolo11m"]
@@ -101,13 +101,13 @@ def default_plan() -> list[Job]:
     for cats in ("6categories", "2categories"):
         for m in YOLO_640:
             jobs.append(Job(m, 640, cats, est_h=EST_640[m]))
-    # 1280 dla najlepszego YOLO — model wybierany dynamicznie przed startem.
+    # 1280 dla najlepszego YOLO - model wybierany dynamicznie przed startem.
     # ZMIERZONE: yolov8m @1280 zajal 9,11 h, nie 3,5 h jak szacowano. Przy 1280
     # sonda scina batch z 32 na 8, wiec krokow na epoke jest 4x wiecej, a do
     # tego 4x wiecej pikseli do dekodowania. Szacunek podniesiony do pomiaru.
     jobs.append(Job("__best_yolo__", 1280, "6categories", est_h=9.0))
     jobs.append(Job("__best_yolo__", 1280, "2categories", est_h=9.0))
-    # RF-DETR w OBU galeziach — protokol (§3) mowi, ze jedyna roznica miedzy
+    # RF-DETR w OBU galeziach - protokol (§3) mowi, ze jedyna roznica miedzy
     # ramionami jest --categories. rfdetr-nano @640 zmierzony: 5,87 h, czyli
     # ponad dwa razy wiecej niz szacowane 2,5 h; reszta skalowana w tej proporcji.
     EST_RFDETR = {"nano": 5.9, "small": 7.5, "base": 10.0}
@@ -117,7 +117,7 @@ def default_plan() -> list[Job]:
     # 1280 dla najlepszego RF-DETR, jak dla YOLO (§2)
     jobs.append(Job("__best_rfdetr__", 1280, "6categories", "rfdetr", est_h=14.0))
     jobs.append(Job("__best_rfdetr__", 1280, "2categories", "rfdetr", est_h=14.0))
-    # RT-DETR-l — w tabeli modeli oznaczony jako opcjonalny.
+    # RT-DETR-l - w tabeli modeli oznaczony jako opcjonalny.
     # ZMIERZONE czesciowo: bieg przerwany na 88. epoce po 4,7 h, czyli ~5,3 h
     # na pelne sto. Z zapasem 5,5.
     jobs.append(Job("rtdetr-l", 640, "6categories", est_h=5.5))
@@ -147,7 +147,7 @@ def done(results_dir: Path, run_name: str) -> bool:
     return (results_dir / run_name / "metrics.json").is_file()
 
 
-#: pliki ze STANEM treningu (nie samymi wagami) — po nich poznajemy, ze bieg
+#: pliki ze STANEM treningu (nie samymi wagami) - po nich poznajemy, ze bieg
 #: da sie wznowic od przerwanej epoki zamiast zaczynac od poczatku
 RESUMABLE = ("weights/last.pt", "last.ckpt")
 
@@ -182,9 +182,9 @@ def main() -> None:
         if name.startswith("__best_"):
             status = "zaleznie od wynikow @640"
         elif done(results_dir, name):
-            status = "GOTOWE — pomijam"
+            status = "GOTOWE - pomijam"
         elif resumable(results_dir, name):
-            status = "PRZERWANY — wznowie"
+            status = "PRZERWANY - wznowie"
             todo.append(j)
         elif args.only and name not in args.only:
             status = "poza --only"
@@ -203,11 +203,11 @@ def main() -> None:
         elapsed = (time.perf_counter() - t_start) / 3600
         if args.max_hours and elapsed + j.est_h > args.max_hours:
             # Nie zaczynamy biegu, ktory wedlug szacunku przekroczylby limit.
-            # Szacunek moze byc nietrafiony, wiec to zabezpieczenie miekkie —
+            # Szacunek moze byc nietrafiony, wiec to zabezpieczenie miekkie -
             # ale lepsze niz obudzenie sie z biegiem urwanym w polowie.
             print(
                 f"\n[queue] {j.run_name} ({j.est_h:.1f} h szac.) nie zmiesci sie w "
-                f"limicie {args.max_hours} h — minelo {elapsed:.1f} h. Szukam krotszego."
+                f"limicie {args.max_hours} h - minelo {elapsed:.1f} h. Szukam krotszego."
             )
             continue
 
@@ -216,7 +216,7 @@ def main() -> None:
             pick = best_of(results_dir, j.categories, fw)
             if not pick:
                 print(f"\n[queue] brak ukonczonych biegow {fw} @640 dla "
-                      f"{j.categories} — pomijam bieg @1280")
+                      f"{j.categories} - pomijam bieg @1280")
                 continue
             j = Job(pick, j.imgsz, j.categories, j.framework, j.est_h)
             print(f"\n[queue] najlepszy {fw} @640 ({j.categories}) = {pick}")
@@ -232,12 +232,12 @@ def main() -> None:
         t0 = time.perf_counter()
         res = resumable(results_dir, name)
         if res:
-            print(f"[queue] znaleziono stan przerwanego treningu — wznawiam {name}")
+            print(f"[queue] znaleziono stan przerwanego treningu - wznawiam {name}")
         r = subprocess.run(j.cmd(resume=res), env=ENV)
         dt = (time.perf_counter() - t0) / 3600
         if r.returncode != 0 or not done(results_dir, name):
             print(f"[queue] !!! {name} nie zakonczyl sie poprawnie (kod {r.returncode}, "
-                  f"{dt:.2f} h) — ide dalej")
+                  f"{dt:.2f} h) - ide dalej")
             failed.append(name)
             continue
         print(f"[queue] {name} gotowe w {dt:.2f} h")

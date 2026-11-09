@@ -1,6 +1,6 @@
 """Uklad katalogow w formacie Ultralytics YOLO, budowany z cache AFO.
 
-Obrazy sa podlinkowane twardo (os.link) — zero kosztu na dysku i zero kopiowania
+Obrazy sa podlinkowane twardo (os.link) - zero kosztu na dysku i zero kopiowania
 4,5 GB. Snapshot z HF nie jest modyfikowany; wszystko powstaje w <cache>/yolo.
 Etykiety sa kopiowane z przycieciem wspolrzednych do [0,1], zgodnie z protokolem.
 """
@@ -21,7 +21,7 @@ YOLO_DIRNAME = "yolo"
 
 
 def _link_or_copy(src: Path, dst: Path) -> str:
-    """Twarde dowiazanie; gdy sie nie da (inny wolumin, FS bez hardlinkow) — kopia."""
+    """Twarde dowiazanie; gdy sie nie da (inny wolumin, FS bez hardlinkow) - kopia."""
     if dst.exists():
         return "exists"
     try:
@@ -33,7 +33,7 @@ def _link_or_copy(src: Path, dst: Path) -> str:
 
 
 def _resize_to(src: Path, dst: Path, max_side: int, quality: int = 95) -> str:
-    """Zapisuje kopie o dluzszym boku <= max_side. Obrazy mniejsze — dowiazuje.
+    """Zapisuje kopie o dluzszym boku <= max_side. Obrazy mniejsze - dowiazuje.
 
     Powod: oryginaly maja 2,5K-4K, a dekodowanie JPEG-a jest waskim gardlem
     treningu (domyslna augmentacja mozaikowa czyta 4 obrazy na probke).
@@ -69,12 +69,12 @@ def prepare_images(
     """Przeskalowane kopie obrazow JEDNEGO podzialu, bez etykiet i bez yaml-a.
 
     ``prepare_yolo`` przerabia wszystkie trzy podzialy (3641 obrazow), co przy
-    odtwarzaniu samego wyniku testowego jest marnotrawstwem — tu wystarczy 514.
+    odtwarzaniu samego wyniku testowego jest marnotrawstwem - tu wystarczy 514.
     Skalowanie idzie tym samym ``_resize_to`` i ta sama jakoscia JPEG, wiec
     piksele sa identyczne z tymi, na ktorych liczono opublikowane metryki;
     inaczej wynik nie zszedlby sie na czwartym miejscu po przecinku.
 
-    Zapisuje WYLACZNIE do ``out_dir`` — korzen zbioru moze byc tylko do odczytu.
+    Zapisuje WYLACZNIE do ``out_dir`` - korzen zbioru moze byc tylko do odczytu.
     """
     ds = AFODataset(split, root=root, clip=clip, categories=categories)
     out = Path(out_dir)
@@ -96,7 +96,7 @@ def prepare_images(
     n = sum(1 for p in out.iterdir() if p.suffix.lower() in (".jpg", ".jpeg", ".png"))
     if n != len(ds.records):
         raise RuntimeError(
-            f"{out}: {n} obrazow, a podzial {split} ma {len(ds.records)} — "
+            f"{out}: {n} obrazow, a podzial {split} ma {len(ds.records)} - "
             f"katalog zawiera cos jeszcze albo czegos brakuje"
         )
     print(f"[images/{split}] {n} obrazow w {out} (dluzszy bok <= {max_side}, {modes})")
@@ -115,7 +115,7 @@ def prepare_yolo(
     """Buduje uklad YOLO i zwraca sciezke do pliku ``afo.yaml``.
 
     ``max_side`` (np. 1280) zapisuje przeskalowane kopie obrazow zamiast
-    dowiazan — patrz ``_resize_to``. None zostawia oryginaly.
+    dowiazan - patrz ``_resize_to``. None zostawia oryginaly.
 
     ``categories`` wybiera katalog etykiet ("6categories", "2categories",
     "1category"). ``images_from`` pozwala podlinkowac gotowe obrazy z innego
@@ -175,7 +175,7 @@ def prepare_yolo(
                 for a in rec.annotations
             ]
             n_obj += len(lines)
-            # pusty plik dla obrazu tla — Ultralytics traktuje go jako negatyw
+            # pusty plik dla obrazu tla - Ultralytics traktuje go jako negatyw
             (lbl_dir / (Path(rec.filename).stem + ".txt")).write_text(
                 "\n".join(lines) + ("\n" if lines else ""), encoding="utf-8"
             )
@@ -185,7 +185,7 @@ def prepare_yolo(
         if n_img != len(ds) or n_lbl != len(ds):
             raise RuntimeError(
                 f"{split}: loader ma {len(ds)} rekordow, a na dysku jest "
-                f"{n_img} obrazow i {n_lbl} etykiet — przerwane, zeby nie uczyc "
+                f"{n_img} obrazow i {n_lbl} etykiet - przerwane, zeby nie uczyc "
                 f"na niepelnym zbiorze."
             )
         stats[split] = {"images": n_img, "objects": n_obj, **modes}

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Pomiar czasu epoki na tym GPU — podstawa oszacowania budzetu fazy B.
+"""Pomiar czasu epoki na tym GPU - podstawa oszacowania budzetu fazy B.
 
 Nie jest to bieg benchmarkowy: uczy przez kilka epok wylacznie po to, zeby
 zmierzyc sekundy/epoke i najwiekszy batch mieszczacy sie w VRAM. Wyniki ida do
@@ -18,7 +18,7 @@ import torch
 
 #: Udzial fizycznego VRAM-u, powyzej ktorego batch uznajemy za niemieszczacy sie.
 #: UWAGA: na Windowsie sterownik NVIDIA domyslnie robi fallback do pamieci
-#: systemowej zamiast rzucic OutOfMemoryError — alokacja 20 GB na karcie 16 GB
+#: systemowej zamiast rzucic OutOfMemoryError - alokacja 20 GB na karcie 16 GB
 #: "udaje sie" i po cichu zamienia trening w thrashing po PCIe. Dlatego progiem
 #: jest zmierzone zuzycie, a nie wyjatek.
 VRAM_LIMIT_FRAC = 0.85
@@ -46,7 +46,7 @@ def largest_batch(model_name: str, imgsz: int, data: str, candidates: list[int])
             peak = torch.cuda.max_memory_allocated()
             if peak > budget:
                 print(
-                    f"    batch {b:4d} ZA DUZY — peak {peak/1e9:.1f} GB > "
+                    f"    batch {b:4d} ZA DUZY - peak {peak/1e9:.1f} GB > "
                     f"{budget/1e9:.1f} GB ({VRAM_LIMIT_FRAC:.0%} z {total/1e9:.1f} GB)"
                 )
                 break
@@ -105,7 +105,7 @@ def main() -> None:
     args = ap.parse_args()
 
     if not torch.cuda.is_available():
-        raise SystemExit("Brak CUDA — kalibracja wymaga GPU.")
+        raise SystemExit("Brak CUDA - kalibracja wymaga GPU.")
     gpu = torch.cuda.get_device_name(0)
     print(f"GPU: {gpu}\nDane: {args.data}\n")
 

@@ -3,7 +3,7 @@
 
 Dlaczego osobno, a nie na koncu treningu: GPU laptopa po godzinach pracy jest
 gorace i obniza zegary. Te same wagi dawaly 43,8 FPS tuz po treningu i 76,2 FPS
-na zimnej karcie — czyli liczba mierzona zaraz po treningu opisuje stan cieplny
+na zimnej karcie - czyli liczba mierzona zaraz po treningu opisuje stan cieplny
 maszyny, nie model. Ten skrypt czeka na wychlodzenie przed kazdym modelem i
 zapisuje temperature oraz zegar obok wyniku.
 
@@ -37,7 +37,7 @@ RFDETR_CLASS = {"nano": "RFDETRNano", "small": "RFDETRSmall", "base": "RFDETRBas
 
 def measure_rfdetr(run: Path, metrics: dict, files: list[Path], repeats: int,
                    cooldown: bool, cooldown_temp_c: float) -> dict:
-    """FPS dla RF-DETR — inny framework, ten sam protokol pomiaru."""
+    """FPS dla RF-DETR - inny framework, ten sam protokol pomiaru."""
     import re
     import statistics
 
@@ -56,7 +56,7 @@ def measure_rfdetr(run: Path, metrics: dict, files: list[Path], repeats: int,
     model = cls(pretrain_weights=str(ckpt), resolution=imgsz,
                 num_classes=len(metrics["class_names"]))
 
-    # ta sama niespojnosc rozdzielczosci co przy predykcji — patrz train_rfdetr
+    # ta sama niespojnosc rozdzielczosci co przy predykcji - patrz train_rfdetr
     shape = None
     override = metrics.get("inference_shape_override")
     if override:
@@ -154,7 +154,7 @@ def main() -> None:
 
         w = weights_for(run)
         if w is None:
-            print(f"[fps] {run.name}: brak best.pt — POMIJAM")
+            print(f"[fps] {run.name}: brak best.pt - POMIJAM")
             skipped.append(run.name)
             continue
 
@@ -169,7 +169,7 @@ def main() -> None:
         (run / "metrics.json").write_text(json.dumps(metrics, indent=2), encoding="utf-8")
         updated.append(run.name)
 
-    print(f"\nzaktualizowane ({len(updated)}): {', '.join(updated) or '—'}")
+    print(f"\nzaktualizowane ({len(updated)}): {', '.join(updated) or '-'}")
     if skipped:
         print(f"pominiete ({len(skipped)}): {', '.join(skipped)}")
 

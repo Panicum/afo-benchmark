@@ -29,9 +29,9 @@ def code(text: str) -> None:
 # --- 1. tytul -------------------------------------------------------------
 
 md("""
-# AFO — quick start, visualisation and benchmark baselines
+# AFO - quick start, visualisation and benchmark baselines
 
-**AFO (Aerial dataset of Floating Objects)** — 3,641 drone images, 39,991 hand-annotated objects,
+**AFO (Aerial dataset of Floating Objects)** - 3,641 drone images, 39,991 hand-annotated objects,
 6 classes, built for maritime search-and-rescue perception. Most objects are swimmers and boards
 seen from tens of metres up, often a few dozen pixels across.
 
@@ -93,7 +93,7 @@ with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     ds = {s: AFODataset(s) for s in SPLITS}
 
-CLASSES = ds["train"].class_names            # pisownia z .names — zrodlo prawdy
+CLASSES = ds["train"].class_names            # pisownia z .names - zrodlo prawdy
 LABELS = [display_name(c) for c in CLASSES]  # poprawiona, tylko na wykresy
 PALETTE = plt.get_cmap("tab10").colors
 
@@ -111,7 +111,7 @@ def sample_distinct_clips(records, n, seed=SEED):
     """n kadrow, kazdy z innego ujecia.
 
     Zbior powstal z 50 filmow, wiec losowanie wprost potrafi dac osiem niemal
-    identycznych klatek jednego klipu — a wtedy siatka nie pokazuje zbioru,
+    identycznych klatek jednego klipu - a wtedy siatka nie pokazuje zbioru,
     tylko jedno miejsce.
     """
     out, used = [], set()
@@ -148,7 +148,7 @@ def draw_split(split, n=8, ncols=4, seed=SEED):
         ax.axis("off")
     handles = [Rectangle((0, 0), 1, 1, color=PALETTE[i]) for i in range(len(CLASSES))]
     fig.legend(handles, LABELS, loc="lower center", ncol=len(CLASSES), frameon=False)
-    fig.suptitle(f"{split} — {n} random images, one per source clip", fontsize=13)
+    fig.suptitle(f"{split} - {n} random images, one per source clip", fontsize=13)
     # jawne odstepy: tight_layout przy axis("off") nie widzi tytulow i rzad drugi
     # nadpisywal obrazy z pierwszego
     fig.subplots_adjust(0.01, 0.10, 0.99, 0.90, wspace=0.03, hspace=0.16)
@@ -185,7 +185,7 @@ plt.show()
 ''')
 
 code('''
-# udzial powierzchni ramki w powierzchni obrazu — wspolrzedne sa znormalizowane,
+# udzial powierzchni ramki w powierzchni obrazu - wspolrzedne sa znormalizowane,
 # wiec nie trzeba czytac rozmiarow plikow
 rel = np.array([a.w * a.h for s in SPLITS for rec in ds[s].records for a in rec.annotations])
 med = float(np.median(rel))
@@ -237,7 +237,7 @@ md("""
 ## 3. Reproduce two rows of the leaderboard
 
 The published numbers were measured on images rescaled to a 1280 px longest side, so that step is
-reproduced here as well — predicting on the native 2.5K–4K files is a different resampling chain
+reproduced here as well - predicting on the native 2.5K–4K files is a different resampling chain
 and gives different numbers. Boxes are mapped back to the ground-truth coordinate space before
 evaluation.
 """)
@@ -261,7 +261,7 @@ MODELS = {
 for name, m in MODELS.items():
     m["path"] = hf_hub_download(m["repo"], m["file"])
     # wartosci odniesienia czytamy z metrics.json W REPOZYTORIUM MODELU, a nie
-    # przepisane recznie — porownanie ma dotyczyc tego, co opublikowane
+    # przepisane recznie - porownanie ma dotyczyc tego, co opublikowane
     m["published"] = json.loads(Path(hf_hub_download(m["repo"], "metrics.json")).read_text())
     print(f"{name:12s} {Path(m['path']).name:26s} published mAP50-95 = {m['published']['mAP50_95']:.4f}")
 ''')
@@ -305,7 +305,7 @@ for name, m in MODELS.items():
     worst = max(worst, max(abs(a - b) for a, b in zip(mine, pub)))
 
 print(f"\\nlargest absolute difference vs the published row: {worst:.6f}")
-assert worst < 5e-5, "does not reproduce to 4 decimals — report it, do not adjust anything"
+assert worst < 5e-5, "does not reproduce to 4 decimals - report it, do not adjust anything"
 print("reproduced to 4 decimal places")
 ''')
 
@@ -378,7 +378,7 @@ md("""
 
 Full protocol: [BENCHMARK.md](https://github.com/Panicum/afo-benchmark/blob/main/BENCHMARK.md).
 
-- Train on the official `train` split only, select on `val`, touch `test` once — the splits are
+- Train on the official `train` split only, select on `val`, touch `test` once - the splits are
   used exactly as released.
 - One shared pycocotools evaluator for every row, `maxDets=300` because a frame can hold 94 objects.
 - Size buckets are measured at a fixed 640 px reference scale, so rows at different `imgsz` stay
@@ -398,7 +398,7 @@ that evaluator, plus the command that made it.
 }
 ```
 
-The data is **CC BY-NC-SA 3.0 — non-commercial use only**, and the published weights inherit that
+The data is **CC BY-NC-SA 3.0 - non-commercial use only**, and the published weights inherit that
 licence because they were trained on it.
 """)
 

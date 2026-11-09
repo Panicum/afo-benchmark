@@ -2,7 +2,7 @@
 
 Na razie jedno: skumulowany czas treningu. Bieg wznowiony liczy od zera czas
 swojego odcinka, wiec bez kumulacji ``rfdetr-base`` zapisal 0,065 h zamiast
-rzeczywistych ~3,65 h — pieciodziesieciokrotne zanizenie w kolumnie, ktora ma
+rzeczywistych ~3,65 h - pieciodziesieciokrotne zanizenie w kolumnie, ktora ma
 mowic, ile kosztuje wytrenowanie modelu.
 """
 
@@ -31,7 +31,7 @@ def read_state(run_dir: Path | str) -> dict:
 def accumulate_hours(run_dir: Path | str, hours: float | None) -> float | None:
     """Dodaje czas tego odcinka do sumy i zwraca sume calego biegu.
 
-    ``hours=None`` (np. ``--post-only``) nic nie dodaje, tylko odczytuje sume —
+    ``hours=None`` (np. ``--post-only``) nic nie dodaje, tylko odczytuje sume -
     dzieki temu domkniecie biegu nie gubi czasu, ktory juz sie policzyl.
     """
     p = _path(run_dir)
@@ -49,7 +49,7 @@ def accumulate_hours(run_dir: Path | str, hours: float | None) -> float | None:
 
 
 def set_segments(run_dir: Path | str, segments: list[float]) -> float:
-    """Nadpisuje liste odcinkow — do uzupelnienia biegow sprzed kumulacji."""
+    """Nadpisuje liste odcinkow - do uzupelnienia biegow sprzed kumulacji."""
     state = read_state(run_dir)
     state["train_hours_segments"] = [round(float(x), 4) for x in segments]
     state["train_hours_total"] = round(sum(state["train_hours_segments"]), 4)

@@ -2,7 +2,7 @@
 """Oszacowanie wall-clock calej macierzy fazy B z pomiarow kalibracyjnych.
 
 Czyta ``calibration.json`` (z ``calibrate_budget.py``) i ekstrapoluje na modele,
-ktorych nie mierzono. Kazdy wiersz jest oznaczony jako ZMIERZONY albo SZACOWANY —
+ktorych nie mierzono. Kazdy wiersz jest oznaczony jako ZMIERZONY albo SZACOWANY -
 bez tego tabela wygladalaby na jednolicie wiarygodna, a nie jest.
 """
 
@@ -14,7 +14,7 @@ from pathlib import Path
 
 # Mnozniki wzgledem modelu odniesienia (= 1,00) w tej samej rozdzielczosci.
 # Przy 640 trening YOLO jest ograniczony dekodowaniem JPEG-ow, nie GPU, wiec
-# rozmiar modelu prawie nie zmienia czasu epoki — zmierzone 11n 77,7 s vs
+# rozmiar modelu prawie nie zmienia czasu epoki - zmierzone 11n 77,7 s vs
 # 11m 87,7 s przy ~7x roznicy FLOP-ow, czyli +13% na siedmiokrotny model.
 # RF-DETR jest ograniczony GPU i skaluje sie normalnie z rozmiarem.
 FAMILY_FACTOR = {
@@ -24,9 +24,9 @@ FAMILY_FACTOR = {
     # Wyprowadzone z pomiarow przy odniesieniu 77,6 s/epoke @640:
     #   rfdetr-nano  154,5 s (batch 8,  peak  8,1 GB) -> 1,99
     #   rfdetr-base  237,7 s (batch 8,  peak 11,8 GB) -> 3,06
-    #     ten sam model przy batchu 4 to 437,3 s, a przy 16 — 2812 s (thrashing).
+    #     ten sam model przy batchu 4 to 437,3 s, a przy 16 - 2812 s (thrashing).
     #     Batch 8 jest najwiekszy mieszczacy sie w limicie i zarazem najszybszy.
-    #   rfdetr-small — brak pomiaru, srednia geometryczna nano i base
+    #   rfdetr-small - brak pomiaru, srednia geometryczna nano i base
     "rfdetr-nano": 1.99, "rfdetr-small": 2.47, "rfdetr-base": 3.06,
 }
 
@@ -149,7 +149,7 @@ def main() -> None:
     guessed = [r[0] for r in rows if any(g in r[0] for g in GUESSED_FAMILIES)]
     print(f"\nZMIERZONYCH wierszy: {n_meas}/{len(rows)}.")
     print(
-        "Reszta to ekstrapolacja z pomiaru tej samej rodziny — poza "
+        "Reszta to ekstrapolacja z pomiaru tej samej rodziny - poza "
         + (", ".join(sorted(set(guessed))) if guessed else "(brak)")
         + ", gdzie mnoznik jest zgadywany i moze sie mylic nawet 2x."
     )

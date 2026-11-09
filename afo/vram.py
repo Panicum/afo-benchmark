@@ -1,9 +1,9 @@
-"""Kontrola zuzycia VRAM — wspolna dla kalibracji i treningu.
+"""Kontrola zuzycia VRAM - wspolna dla kalibracji i treningu.
 
 Powod istnienia tego modulu: na Windowsie sterownik NVIDIA domyslnie NIE rzuca
 ``torch.cuda.OutOfMemoryError``, gdy alokacja przekroczy pamiec karty. Zamiast
 tego przenosi nadmiar do pamieci systemowej ("sysmem fallback") i wozi tensory
-przez PCIe. Bieg "udaje sie", tylko trwa wielokrotnie dluzej — zmierzone na tym
+przez PCIe. Bieg "udaje sie", tylko trwa wielokrotnie dluzej - zmierzone na tym
 projekcie: RF-DETR base @640 przy batchu 16 zazadal 22,8 GB na karcie 16 GB i
 epoka trwala 2812 s zamiast 437 s przy batchu 4. Szesciokrotne spowolnienie bez
 jednego komunikatu o bledzie.
