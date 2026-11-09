@@ -101,13 +101,37 @@ for s in SPLITS:
     print(f"{s:6s} {len(ds[s]):5d} images  {ds[s].num_objects():6d} objects")
 ''')
 
+code('''
+def clip_of(rec):
+    """Ujecie zrodlowe: 'a_339.jpg' -> 'a'."""
+    return rec.filename.rsplit("_", 1)[0]
+
+
+def sample_distinct_clips(records, n, seed=SEED):
+    """n kadrow, kazdy z innego ujecia.
+
+    Zbior powstal z 50 filmow, wiec losowanie wprost potrafi dac osiem niemal
+    identycznych klatek jednego klipu — a wtedy siatka nie pokazuje zbioru,
+    tylko jedno miejsce.
+    """
+    out, used = [], set()
+    for rec in random.Random(seed).sample(records, len(records)):
+        if clip_of(rec) in used:
+            continue
+        out.append(rec)
+        used.add(clip_of(rec))
+        if len(out) == n:
+            break
+    return out
+''')
+
 # --- 3. oglad danych ------------------------------------------------------
 
 md("## 1. Look at the data")
 
 code('''
 def draw_split(split, n=8, ncols=4, seed=SEED):
-    recs = random.Random(seed).sample(ds[split].records, k=n)
+    recs = sample_distinct_clips(ds[split].records, n, seed)
     nrows = -(-len(recs) // ncols)
     fig, axes = plt.subplots(nrows, ncols, figsize=(4 * ncols, 2.8 * nrows))
     for ax, rec in zip(np.ravel(axes), recs):
@@ -124,11 +148,14 @@ def draw_split(split, n=8, ncols=4, seed=SEED):
         ax.axis("off")
     handles = [Rectangle((0, 0), 1, 1, color=PALETTE[i]) for i in range(len(CLASSES))]
     fig.legend(handles, LABELS, loc="lower center", ncol=len(CLASSES), frameon=False)
-    fig.suptitle(f"{split} — {n} random images", fontsize=13)
-    fig.tight_layout(rect=(0, 0.06, 1, 1))
+    fig.suptitle(f"{split} — {n} random images, one per source clip", fontsize=13)
+    # jawne odstepy: tight_layout przy axis("off") nie widzi tytulow i rzad drugi
+    # nadpisywal obrazy z pierwszego
+    fig.subplots_adjust(0.01, 0.10, 0.99, 0.90, wspace=0.03, hspace=0.16)
     plt.show()
+''')
 
-
+code('''
 for s in SPLITS:
     draw_split(s)
 ''')
@@ -311,11 +338,10 @@ ranked = sorted((r for r in ds["test"].records if r.annotations), key=median_sid
 rng = random.Random(SEED)
 picked, used = [], set()
 for rec in ranked[:2] + rng.sample(ranked, len(ranked)):  # 2 najdrobniejsze, potem losowo
-    clip = rec.filename.rsplit("_", 1)[0]
-    if clip in used:
+    if clip_of(rec) in used:
         continue
     picked.append(rec)
-    used.add(clip)
+    used.add(clip_of(rec))
     if len(picked) == 6:
         break
 
@@ -379,11 +405,14 @@ licence because they were trained on it.
 
 def build() -> Path:
     cells = []
-    for kind, text in CELLS:
+    for n, (kind, text) in enumerate(CELLS):
         lines = text.splitlines(keepends=True)
         if kind == "code" and len(lines) > MAX_CELL_LINES:
             raise SystemExit(f"komorka ma {len(lines)} linii (limit {MAX_CELL_LINES}):\n{text[:200]}")
-        cell = {"cell_type": kind, "metadata": {}, "source": lines}
+        # nbformat >= 4.5 wymaga identyfikatora komorki; bez niego walidator
+        # ostrzega, a w przyszlych wersjach ma to byc blad. Numer kolejny
+        # wystarcza i jest stabilny miedzy odbudowami.
+        cell = {"cell_type": kind, "id": f"afo-{n:02d}", "metadata": {}, "source": lines}
         if kind == "code":
             cell["execution_count"] = None
             cell["outputs"] = []
